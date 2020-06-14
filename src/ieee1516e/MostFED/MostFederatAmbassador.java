@@ -45,41 +45,6 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
         System.out.println("FederateAmbassador: " + message);
     }
 
-    private String decodeFlavor(byte[] bytes) {
-        HLAinteger32BE value = federate.encoderFactory.createHLAinteger32BE();
-        // decode
-        try {
-            value.decode(bytes);
-        } catch (DecoderException de) {
-            return "Decoder Exception: " + de.getMessage();
-        }
-
-        switch (value.getValue()) {
-            case 101:
-                return "Cola";
-            case 102:
-                return "Orange";
-            case 103:
-                return "RootBeer";
-            case 104:
-                return "Cream";
-            default:
-                return "Unknown";
-        }
-    }
-
-    private short decodeNumCups(byte[] bytes) {
-        HLAinteger16BE value = federate.encoderFactory.createHLAinteger16BE();
-        // decode
-        try {
-            value.decode(bytes);
-            return value.getValue();
-        } catch (DecoderException de) {
-            de.printStackTrace();
-            return 0;
-        }
-    }
-
     //////////////////////////////////////////////////////////////////////////
     ////////////////////////// RTI Callback Methods //////////////////////////
     //////////////////////////////////////////////////////////////////////////
@@ -160,54 +125,17 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
     }
 
     @Override
-    public void reflectAttributeValues(ObjectInstanceHandle theObject,
-                                       AttributeHandleValueMap theAttributes,
-                                       byte[] tag,
-                                       OrderType sentOrdering,
-                                       TransportationTypeHandle theTransport,
-                                       LogicalTime time,
-                                       OrderType receivedOrdering,
-                                       SupplementalReflectInfo reflectInfo)
-            throws FederateInternalError {
-        StringBuilder builder = new StringBuilder("Reflection for object:");
+    public void reflectAttributeValues( ObjectInstanceHandle theObject,
+                                        AttributeHandleValueMap theAttributes,
+                                        byte[] tag,
+                                        OrderType sentOrdering,
+                                        TransportationTypeHandle theTransport,
+                                        LogicalTime time,
+                                        OrderType receivedOrdering,
+                                        SupplementalReflectInfo reflectInfo )
+            throws FederateInternalError
+    {
 
-        // print the handle
-        builder.append(" handle=" + theObject);
-        // print the tag
-        builder.append(", tag=" + new String(tag));
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if (time != null) {
-            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
-        }
-
-        // print the attribute information
-        builder.append(", attributeCount=" + theAttributes.size());
-        builder.append("\n");
-        for (AttributeHandle attributeHandle : theAttributes.keySet()) {
-            // print the attibute handle
-            builder.append("\tattributeHandle=");
-
-            // if we're dealing with Flavor, decode into the appropriate enum value
-            if (attributeHandle.equals(federate.flavHandle)) {
-                builder.append(attributeHandle);
-                builder.append(" (Flavor)    ");
-                builder.append(", attributeValue=");
-                builder.append(decodeFlavor(theAttributes.get(attributeHandle)));
-            } else if (attributeHandle.equals(federate.cupsHandle)) {
-                builder.append(attributeHandle);
-                builder.append(" (NumberCups)");
-                builder.append(", attributeValue=");
-                builder.append(decodeNumCups(theAttributes.get(attributeHandle)));
-            } else {
-                builder.append(attributeHandle);
-                builder.append(" (Unknown)   ");
-            }
-
-            builder.append("\n");
-        }
-
-        log(builder.toString());
     }
 
     @Override
@@ -232,46 +160,17 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
     }
 
     @Override
-    public void receiveInteraction(InteractionClassHandle interactionClass,
-                                   ParameterHandleValueMap theParameters,
-                                   byte[] tag,
-                                   OrderType sentOrdering,
-                                   TransportationTypeHandle theTransport,
-                                   LogicalTime time,
-                                   OrderType receivedOrdering,
-                                   SupplementalReceiveInfo receiveInfo)
-            throws FederateInternalError {
-        StringBuilder builder = new StringBuilder("Interaction Received:");
+    public void receiveInteraction( InteractionClassHandle interactionClass,
+                                    ParameterHandleValueMap theParameters,
+                                    byte[] tag,
+                                    OrderType sentOrdering,
+                                    TransportationTypeHandle theTransport,
+                                    LogicalTime time,
+                                    OrderType receivedOrdering,
+                                    SupplementalReceiveInfo receiveInfo )
+            throws FederateInternalError
+    {
 
-        // print the handle
-        builder.append(" handle=" + interactionClass);
-        if (interactionClass.equals(federate.servedHandle)) {
-            builder.append(" (DrinkServed)");
-        }
-
-        // print the tag
-        builder.append(", tag=" + new String(tag));
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if (time != null) {
-            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
-        }
-
-        // print the parameer information
-        builder.append(", parameterCount=" + theParameters.size());
-        builder.append("\n");
-        for (ParameterHandle parameter : theParameters.keySet()) {
-            // print the parameter handle
-            builder.append("\tparamHandle=");
-            builder.append(parameter);
-            // print the parameter value
-            builder.append(", paramValue=");
-            builder.append(theParameters.get(parameter).length);
-            builder.append(" bytes");
-            builder.append("\n");
-        }
-
-        log(builder.toString());
     }
 
     @Override
