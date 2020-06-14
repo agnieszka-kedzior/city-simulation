@@ -1,11 +1,11 @@
-package ieee1516e.MostFED;
+package ieee1516e.KolejkaFED;
 
 import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 
 
-public class MostFederatAmbassador extends NullFederateAmbassador {
+public class KolejkaFederatAmbassador extends NullFederateAmbassador {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
     //----------------------------------------------------------
@@ -13,7 +13,7 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
-    private MostFederat federate;
+    private KolejkaFederat federate;
 
     // these variables are accessible in the package
     protected double federateTime = 0.0;
@@ -26,13 +26,11 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
     protected boolean isAnnounced = false;
     protected boolean isReadyToRun = false;
 
-    protected boolean isRunning = true;
-
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
 
-    public MostFederatAmbassador(MostFederat federate) {
+    public KolejkaFederatAmbassador(KolejkaFederat federate) {
         this.federate = federate;
     }
 
@@ -60,14 +58,14 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
     @Override
     public void announceSynchronizationPoint(String label, byte[] tag) {
         log("Synchronization point announced: " + label);
-        if (label.equals(MostFederat.READY_TO_RUN))
+        if (label.equals(KolejkaFederat.READY_TO_RUN))
             this.isAnnounced = true;
     }
 
     @Override
     public void federationSynchronized(String label, FederateHandleSet failed) {
         log("Federation Synchronized: " + label);
-        if (label.equals(MostFederat.READY_TO_RUN))
+        if (label.equals(KolejkaFederat.READY_TO_RUN))
             this.isReadyToRun = true;
     }
 

@@ -1,4 +1,4 @@
-package ieee1516e.MostFED;
+package ieee1516e.KolejkaFED;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
@@ -9,29 +9,34 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import ieee1516e.Samochod;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 
 
-public class MostFederat {
+public class KolejkaFederat {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
     //----------------------------------------------------------
     public static final int ITERATIONS = 20;
     public static final String READY_TO_RUN = "ReadyToRun";
-    private static  final int MOST_CAR_AMOUNT = 5;
-
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
     private RTIambassador rtiamb;
-    private MostFederatAmbassador fedamb;
+    private KolejkaFederatAmbassador fedamb;
     private HLAfloat64TimeFactory timeFactory;
     protected EncoderFactory encoderFactory;
+
+    protected ObjectClassHandle kolejkaHandle;
+    protected AttributeHandle kolejkaNumerHandle;
+    protected AttributeHandle kolejkaPierwszyHandle;
+    protected LinkedList<LinkedList<Samochod>> kolejkaSamochodow;
 
     protected ObjectClassHandle mostHandle;
     protected AttributeHandle mostCzyPustyHandle;
@@ -46,7 +51,7 @@ public class MostFederat {
     //                    INSTANCE METHODS
     //----------------------------------------------------------
     private void log(String message) {
-        System.out.println("MostFederate   : " + message);
+        System.out.println("KolejkaFederate   : " + message);
     }
 
     private void waitForUser() {
@@ -67,7 +72,7 @@ public class MostFederat {
 
         // connect
         log("Connecting...");
-        fedamb = new MostFederatAmbassador(this);
+        fedamb = new KolejkaFederatAmbassador(this);
         rtiamb.connect(fedamb, CallbackModel.HLA_EVOKED);
 
         log("Creating Federation...");
@@ -120,27 +125,19 @@ public class MostFederat {
         enableTimePolicy();
         log("Time Policy Enabled");
 
-
-        publishMost();
+        subscribeMost();
+        publishKolejke();
         log("Published and Subscribed");
 
-        ObjectInstanceHandle objMostHandle = rtiamb.registerObjectInstance(mostHandle);
+        ObjectInstanceHandle objKolejkaHandle = rtiamb.registerObjectInstance(kolejkaHandle);
 
-        /////////////////////////////////////
-        // 10. do the main simulation loop //
-        /////////////////////////////////////
-        // here is where we do the meat of our work. in each iteration, we will
-        // update the attribute values of the object we registered, and will
-        // send an interaction.
-        while (fedamb.isRunning){
-            for (int i = 0; i < ITERATIONS; i++) {
-                log("Iteration executed ("+i+")");
-            }
+        for (int i = 0; i < ITERATIONS; i++) {
+            log("Iteration executed ("+i+")");
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
 
-        deleteObject(objMostHandle);
+        deleteObject(objKolejkaHandle);
 
         rtiamb.resignFederationExecution(ResignAction.DELETE_OBJECTS);
         log("Resigned from Federation");
@@ -187,7 +184,8 @@ public class MostFederat {
         }
     }
 
-    private void publishMost() throws RTIexception {
+    private void subscribeMost() throws RTIexception
+    {
         this.mostHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Most");
         this.mostCzyPelnyHandle = rtiamb.getAttributeHandle(mostHandle, "czyPelny");
         this.mostCzyPustyHandle = rtiamb.getAttributeHandle(mostHandle,"czyPusty");
@@ -198,9 +196,21 @@ public class MostFederat {
         mostAttributes.add(mostCzyPustyHandle);
         mostAttributes.add(mostKierunekHandle);
 
-        rtiamb.publishObjectClassAttributes(mostHandle, mostAttributes);
+        rtiamb.subscribeObjectClassAttributes(mostHandle, mostAttributes);
+        log("CashDesk Subscription Set");
+    }
+    private void publishKolejke() throws RTIexception {
+        this.kolejkaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Kolejka");
+        this.kolejkaNumerHandle = rtiamb.getAttributeHandle(kolejkaHandle, "idKolejka");
+        this.kolejkaPierwszyHandle = rtiamb.getAttributeHandle(kolejkaHandle,"idPierwszy");
 
-        log("Most Publishing Set");
+        AttributeHandleSet kolejkaAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        kolejkaAttributes.add(kolejkaNumerHandle);
+        kolejkaAttributes.add(kolejkaPierwszyHandle);
+
+        rtiamb.publishObjectClassAttributes(kolejkaHandle, kolejkaAttributes);
+
+        log("Kolejka Publishing Set");
     }
 
     /**
@@ -209,7 +219,7 @@ public class MostFederat {
      * simulation, we will update the attribute values for this instance
      */
     private ObjectInstanceHandle registerObject() throws RTIexception {
-        return rtiamb.registerObjectInstance(mostHandle);
+        return rtiamb.registerObjectInstance(kolejkaHandle);
     }
 
     /**
@@ -247,14 +257,17 @@ public class MostFederat {
     //                     STATIC METHODS
     //----------------------------------------------------------
     public static void main(String[] args) {
-        String federateName = "mostFederate";
+        // get a federate name, use "exampleFederate" as default
+        String federateName = "kolejkaFederate";
         if (args.length != 0) {
             federateName = args[0];
         }
 
         try {
-            new ieee1516e.MostFED.MostFederat().runFederate(federateName);
+            // run the example federate
+            new KolejkaFederat().runFederate(federateName);
         } catch (Exception rtie) {
+            // an exception occurred, just log the information and exit
             rtie.printStackTrace();
         }
     }
