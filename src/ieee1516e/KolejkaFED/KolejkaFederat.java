@@ -131,8 +131,7 @@ public class KolejkaFederat {
 
         ObjectInstanceHandle objKolejkaHandle = rtiamb.registerObjectInstance(kolejkaHandle);
 
-        for (int i = 0; i < ITERATIONS; i++) {
-            log("Iteration executed ("+i+")");
+        while (fedamb.isRunning){
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
