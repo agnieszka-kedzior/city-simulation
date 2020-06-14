@@ -37,7 +37,6 @@ public class KolejkaFederat {
     protected ObjectClassHandle kolejkaHandle;
     protected AttributeHandle kolejkaNumerHandle;
     protected AttributeHandle kolejkaPierwszyHandle;
-    protected LinkedList<LinkedList<Samochod>> kolejkaSamochodow;
 
     protected ObjectClassHandle mostHandle;
     protected AttributeHandle mostCzyPustyHandle;
@@ -49,6 +48,11 @@ public class KolejkaFederat {
     protected AttributeHandle autoPredkoscDrogaHandle;
     protected AttributeHandle autoPredkoscMostHandle;
     protected AttributeHandle autoDrogaHandle;
+
+    protected InteractionClassHandle dolaczenieDoKolejkiHandle;
+    protected ParameterHandle dolaczaAutoIdHandle;
+    protected InteractionClassHandle opuszczenieKolejkiHandle;
+    protected ParameterHandle opuszczaAutoIdHandle;
 
     private Kolejka kolejkaMiastoA;
     private Kolejka kolejkaMiastoB;
@@ -134,6 +138,8 @@ public class KolejkaFederat {
         subscribeMost();
         subscribeAuto();
         publishKolejke();
+        subscribeDolaczenieDoKolejki();
+        subscribeOpuszczenieKolejki();
         log("Published and Subscribed");
 
         kolejkaMiastoA = new Kolejka(1);
@@ -235,20 +241,34 @@ public class KolejkaFederat {
         log("Kolejka Publishing Set");
     }
 
-    /**
-     * This method will register an instance of the Soda class and will
-     * return the federation-wide unique handle for that instance. Later in the
-     * simulation, we will update the attribute values for this instance
-     */
+    private void subscribeDolaczenieDoKolejki() throws RTIexception {
+        this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
+        this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
+        rtiamb.subscribeInteractionClass(dolaczenieDoKolejkiHandle);
+    }
+
+    private void subscribeOpuszczenieKolejki() throws RTIexception {
+        this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.opuszczenieKolejki");
+        this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
+        rtiamb.subscribeInteractionClass(dolaczenieDoKolejkiHandle);
+    }
+
+    protected void dodajDoKolejki(int autoId){
+        int tmp = (int) ( Math.random() * 2 + 1); // will return either 1 or 2
+
+        if (tmp == kolejkaMiastoA.getIdKolejki()){
+            this.kolejkaMiastoA.addSamochodow(new Samochod(autoId));
+        } else {
+            this.kolejkaMiastoB.addSamochodow(new Samochod(autoId));
+        }
+
+        log("Czeka na przejazd ("+autoId+")w kolejce " + tmp);
+    }
+
     private ObjectInstanceHandle registerObject() throws RTIexception {
         return rtiamb.registerObjectInstance(kolejkaHandle);
     }
 
-    /**
-     * This method will request a time advance to the current time, plus the given
-     * timestep. It will then wait until a notification of the time advance grant
-     * has been received.
-     */
     private void advanceTime(double timestep) throws RTIexception {
         // request the advance
         fedamb.isAdvancing = true;

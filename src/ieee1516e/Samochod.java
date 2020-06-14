@@ -1,14 +1,13 @@
 package ieee1516e;
 
 public class Samochod {
+
     int idSamochod;
     double vMost;
     double sPozostala;
 
-    public Samochod(int idCar, double vBridge, double distanceLeft) {
+    public Samochod(int idCar) {
         this.idSamochod = idCar;
-        this.vMost = vBridge;
-        this.sPozostala = distanceLeft;
     }
 
     @Override

@@ -1,8 +1,13 @@
 package ieee1516e.KolejkaFED;
 
 import hla.rti1516e.*;
+import hla.rti1516e.encoding.DecoderException;
+import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.HLAinteger32LE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32LE;
 
 
 public class KolejkaFederatAmbassador extends NullFederateAmbassador {
@@ -143,17 +148,22 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
                                    TransportationTypeHandle theTransport,
                                    SupplementalReceiveInfo receiveInfo)
             throws FederateInternalError {
-        // just pass it on to the other method for printing purposes
-        // passing null as the time will let the other method know it
-        // it from us, not from the RTI
-        this.receiveInteraction(interactionClass,
-                theParameters,
-                tag,
-                sentOrdering,
-                theTransport,
-                null,
-                sentOrdering,
-                receiveInfo);
+        if(interactionClass.equals(federate.dolaczenieDoKolejkiHandle)){
+            HLAinteger32LE autoId = new HLA1516eInteger32LE();
+
+            byte[] bytes = theParameters.get(federate.dolaczaAutoIdHandle);
+            try {
+                autoId.decode(bytes);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
+
+            log("otrzymałem interakcję dolaczenie do kolejki samochodu " + autoId.getValue());
+
+            federate.dodajDoKolejki(autoId.getValue());
+        } else if(interactionClass.equals(federate.opuszczenieKolejkiHandle)){
+            //federate.approachesFinished = true;
+        }
     }
 
     @Override

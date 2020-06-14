@@ -1,9 +1,7 @@
 package ieee1516e.SamochodFED;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAinteger16BE;
-import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
@@ -11,12 +9,14 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import ieee1516e.StanSwiatel;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.Random;
 
 public class SamochodFederat {
@@ -153,20 +153,23 @@ public class SamochodFederat {
         // 8. publish and subscribe //
         //////////////////////////////
         publishSamochod();
+        publishDolaczenieDoKolejki();
+        publishOpuszczenieKolejki();
         log("Published and Subscribed");
 
         ObjectInstanceHandle objAutoHandle = rtiamb.registerObjectInstance(autoHandle);
+        log( "Registered Object, handle=" + objAutoHandle );
 
-        generator=new Random();
         samCount = SAMOCHOD_NUM;
-        while(fedamb.isRunning){
+
+        while (fedamb.isRunning){
             samCount--;
             if(samCount<0) {
-                break;
+                sendInteractionDolaczenieDoKolejki(samCount);
             }
-            updateSamochodAttributeValues(objAutoHandle);
+            //updateSamochodAttributeValues(objAutoHandle);
 
-            advanceTime( generateTimeToNext());
+            advanceTime( 1.0);
             log( "Time Advanced to " + fedamb.federateTime );
         }
 
@@ -184,10 +187,6 @@ public class SamochodFederat {
         } catch (FederatesCurrentlyJoined fcj) {
             log("Didn't destroy federation, federates still joined");
         }
-    }
-
-    private int generateTimeToNext(){
-        return generator.nextInt();
     }
 
     private void enableTimePolicy() throws Exception {
@@ -234,6 +233,40 @@ public class SamochodFederat {
         rtiamb.publishObjectClassAttributes(autoHandle, attributes);
 
         log("Samochod Publishing Set");
+    }
+
+    private void publishDolaczenieDoKolejki() throws RTIexception {
+        this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
+        this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
+        rtiamb.publishInteractionClass(dolaczenieDoKolejkiHandle);
+    }
+
+    private void publishOpuszczenieKolejki() throws RTIexception {
+        this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.opuszczenieKolejki");
+        this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
+        rtiamb.publishInteractionClass(dolaczenieDoKolejkiHandle);
+    }
+
+    private void sendInteractionDolaczenieDoKolejki(int autoId) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+
+        HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(autoId);
+        parameters.put(dolaczaAutoIdHandle, auto.toByteArray());
+
+        rtiamb.sendInteraction(dolaczenieDoKolejkiHandle, parameters, generateTag(), time);
+        log("Wysłanie interakcji dolaczenie do kolejki samochodu "+autoId);
+    }
+
+    private void sendInteractionOpuszczenieKolejki(int autoId) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+
+        HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(autoId);
+        parameters.put(opuszczaAutoIdHandle, auto.toByteArray());
+
+        rtiamb.sendInteraction(opuszczenieKolejkiHandle, parameters, generateTag(), time);
+        log("Wysłanie interakcji opuszczenie kolejki");
     }
 
     private void updateSamochodAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception
