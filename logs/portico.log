@@ -1,15 +1,11 @@
 INFO  [main] portico.lrc: LRC initialized (HLA version: IEEE1516e)
 INFO  [main] portico.lrc: Opening LRC Connection
 INFO  [main] portico.lrc.jgroups: jgroups connection is up and running
-ERROR [main] portico.lrc.jgroups: FAILURE createFederation: already exists, name=Federation
+INFO  [main] portico.lrc.jgroups: No co-ordinator found - appointing myself!
+INFO  [Regular] portico.lrc.jgroups: Federation [Federation] has been created
+INFO  [main] portico.lrc.jgroups: SUCCESS createFederation: name=Federation
+INFO  [main] portico.lrc: SUCCESS Created federation execution [Federation]
 INFO  [Regular] portico.lrc.jgroups: Federate [mostFederate] joined federation [Federation]
 INFO  [main] portico.lrc.jgroups: SUCCESS Joined federation with name=mostFederate
-INFO  [Regular] portico.lrc: Synchronization point [ReadyToRun] ANNOUNCED by [null] to [mostFederate]
-INFO  [main] portico.lrc: SUCCESS Joined federate [mostFederate] to federation [Federation]: handle=2
-WARN  [VERIFY_SUSPECT.TimerThread,Federation,DESKTOP-AC5021A-919] portico.lrc.jgroups: Detected that federate [samochodFederate] may have crashed, investigating...
-WARN  [Regular] portico.lrc.jgroups: Federate [samochodFederate] has crashed. Sending fake resignation because it was too rude to.
-INFO  [Regular] portico.lrc.jgroups: Federate [samochodFederate] has resigned from [Federation]
-INFO  [Regular] portico.lrc.jgroups: Federate [samochodFederate,1] disconnected, synthesized resign message. All done.
-derate [mostFederate] has crashed. Sending fake resignation because it was too rude to.
-INFO  [Regular] portico.lrc.jgroups: Federate [mostFederate] has resigned from [Federation]
-INFO  [Regular] portico.lrc.jgroups: Federate [mostFederate,2] disconnected, synthesized resign message. All done.
+INFO  [main] portico.lrc: SUCCESS Joined federate [mostFederate] to federation [Federation]: handle=1
+INFO  [main] portico.lrc: SUCCESS Registered sync point [ReadyToRun] by [mostFederate]
