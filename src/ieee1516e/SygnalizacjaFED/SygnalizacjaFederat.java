@@ -1,9 +1,7 @@
-package ieee1516e.MostFED;
+package ieee1516e.SygnalizacjaFED;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAASCIIstring;
-import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
@@ -11,7 +9,7 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
-import ieee1516e.Most;
+import ieee1516e.StanSwiatel;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,32 +17,28 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-
-public class MostFederat {
+public class SygnalizacjaFederat {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
     //----------------------------------------------------------
+
     public static final int ITERATIONS = 20;
     public static final String READY_TO_RUN = "ReadyToRun";
-    private static  final int MOST_CAR_AMOUNT = 5;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
     private RTIambassador rtiamb;
-    private MostFederatAmbassador fedamb;
-    private HLAfloat64TimeFactory timeFactory;
-    protected EncoderFactory encoderFactory;
-
-    protected ObjectClassHandle mostHandle;
-    protected AttributeHandle mostCzyPustyHandle;
-    protected AttributeHandle mostCzyPelnyHandle;
-    protected AttributeHandle mostKierunekHandle;
+    private SygnalizacjaFederatAmbassador fedamb;  // created when we connect
+    private HLAfloat64TimeFactory timeFactory; // set when we join
+    protected EncoderFactory encoderFactory;     // set when we join
 
     protected InteractionClassHandle zmianaSwiatelHandle;
     protected ParameterHandle stanSwiatelHandle;
 
-    private Most most;
+    protected ObjectClassHandle mostHandle;
+    protected AttributeHandle mostKierunekHandle;
+
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -52,8 +46,9 @@ public class MostFederat {
     //----------------------------------------------------------
     //                    INSTANCE METHODS
     //----------------------------------------------------------
+
     private void log(String message) {
-        System.out.println("MostFederate   : " + message);
+        System.out.println("SygnalizacjaFederate   : " + message);
     }
 
     private void waitForUser() {
@@ -67,17 +62,29 @@ public class MostFederat {
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    ////////////////////////// Main Simulation Method /////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
     public void runFederate(String federateName) throws Exception {
+        /////////////////////////////////////////////////
+        // 1 & 2. create the RTIambassador and Connect //
+        /////////////////////////////////////////////////
         log("Creating RTIambassador");
         rtiamb = RtiFactoryFactory.getRtiFactory().getRtiAmbassador();
         encoderFactory = RtiFactoryFactory.getRtiFactory().getEncoderFactory();
 
         // connect
         log("Connecting...");
-        fedamb = new MostFederatAmbassador(this);
+        fedamb = new SygnalizacjaFederatAmbassador(this);
         rtiamb.connect(fedamb, CallbackModel.HLA_EVOKED);
 
+        //////////////////////////////
+        // 3. create the federation //
+        //////////////////////////////
         log("Creating Federation...");
+        // We attempt to create a new federation with the first three of the
+        // restaurant FOM modules covering processes, food and drink
         try {
             URL[] modules = new URL[]{
                     (new File("foms/HLA.xml")).toURI().toURL(),
@@ -92,23 +99,20 @@ public class MostFederat {
             urle.printStackTrace();
             return;
         }
-        ////////////////////////////
-        // 4. join the federation //
-        ////////////////////////////
 
         URL[] joinModules = new URL[]{
                 (new File("foms/HLA.xml")).toURI().toURL()
         };
 
-        rtiamb.joinFederationExecution( federateName,
+        rtiamb.joinFederationExecution(federateName,
                 "FederateType",
                 "Federation",
-                joinModules );
+                joinModules);
 
         log("Joined Federation as " + federateName);
 
-        // cache the time factory for easy access
         this.timeFactory = (HLAfloat64TimeFactory) rtiamb.getTimeFactory();
+
 
         rtiamb.registerFederationSynchronizationPoint(READY_TO_RUN, null);
         // wait until the point is announced
@@ -127,30 +131,27 @@ public class MostFederat {
         enableTimePolicy();
         log("Time Policy Enabled");
 
-        subscribeSwiatla();
-        publishMost();
+        subscribeMost();
+        publishSwiatla();
         log("Published and Subscribed");
 
-        ObjectInstanceHandle objMostHandle = rtiamb.registerObjectInstance(mostHandle);
+        while (fedamb.isRunning) {
+            // 9.1 update the attribute values of the instance //
+            //updateAttributeValues(objectHandle);
 
-        most = new Most();
+            // 9.2 send an interaction
+            sendInteractionZmianaSwiatel();
 
-        while (fedamb.isRunning){
-            for (int i = 0; i < ITERATIONS; i++) {
-                log("Iteration executed ("+i+")");
-            }
-            updateSwiatla(objMostHandle);
+            // 9.3 request a time advance and wait until we get it
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
-
-        deleteObject(objMostHandle);
 
         rtiamb.resignFederationExecution(ResignAction.DELETE_OBJECTS);
         log("Resigned from Federation");
 
         try {
-            rtiamb.destroyFederationExecution("Federation");
+            rtiamb.destroyFederationExecution("SygnalizacjaFederation");
             log("Destroyed Federation");
         } catch (FederationExecutionDoesNotExist dne) {
             log("No need to destroy federation, it doesn't exist");
@@ -187,56 +188,36 @@ public class MostFederat {
         }
     }
 
-    private void publishMost() throws RTIexception {
+    private void subscribeMost() throws RTIexception {
         this.mostHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Most");
-        this.mostCzyPelnyHandle = rtiamb.getAttributeHandle(mostHandle, "czyPelny");
-        this.mostCzyPustyHandle = rtiamb.getAttributeHandle(mostHandle,"czyPusty");
         this.mostKierunekHandle = rtiamb.getAttributeHandle(mostHandle,"kierunek");
 
         AttributeHandleSet mostAttributes = rtiamb.getAttributeHandleSetFactory().create();
-        mostAttributes.add(mostCzyPelnyHandle);
-        mostAttributes.add(mostCzyPustyHandle);
         mostAttributes.add(mostKierunekHandle);
 
-        rtiamb.publishObjectClassAttributes(mostHandle, mostAttributes);
-
-        log("Most Publishing Set");
+        rtiamb.subscribeObjectClassAttributes(mostHandle, mostAttributes);
+        log("Most Subscription Set");
     }
 
-    private void subscribeSwiatla() throws RTIexception {
+
+    private void publishSwiatla() throws RTIexception {
         this.zmianaSwiatelHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zmianaSwiatel");
         this.stanSwiatelHandle = rtiamb.getParameterHandle(zmianaSwiatelHandle, "stanSwiatel");
 
-        rtiamb.subscribeInteractionClass(zmianaSwiatelHandle);
-        log("Zmiana Swiatel Subscription Set");
+        rtiamb.publishInteractionClass(zmianaSwiatelHandle);
     }
 
-    private void updateSwiatla( ObjectInstanceHandle objectClassHandle) throws RTIexception{
-        AttributeHandleValueMap mostAttributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
+    private void sendInteractionZmianaSwiatel() throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
-        //HLAASCIIstring mostKierunek = encoderFactory.createHLAASCIIstring(stanSwiatel);
-        mostAttributes.put( mostKierunekHandle, stanSwiatelHandle.toString().getBytes());
+        HLAASCIIstring stanSwiatel = encoderFactory.createHLAASCIIstring(StanSwiatel.CZERWONY.toString());
+        parameters.put(stanSwiatelHandle, stanSwiatel.toByteArray());
 
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-        rtiamb.updateAttributeValues( objectClassHandle, mostAttributes, generateTag(), time );
-
-        log("Zmiana swiatel: " + stanSwiatelHandle.toString().getBytes());
+        rtiamb.sendInteraction(zmianaSwiatelHandle, parameters, generateTag(), time);
+        log("Wysłanie interakcji zmiana swiatel");
     }
 
-    /**
-     * This method will register an instance of the Soda class and will
-     * return the federation-wide unique handle for that instance. Later in the
-     * simulation, we will update the attribute values for this instance
-     */
-    private ObjectInstanceHandle registerObject() throws RTIexception {
-        return rtiamb.registerObjectInstance(mostHandle);
-    }
-
-    /**
-     * This method will request a time advance to the current time, plus the given
-     * timestep. It will then wait until a notification of the time advance grant
-     * has been received.
-     */
     private void advanceTime(double timestep) throws RTIexception {
         // request the advance
         fedamb.isAdvancing = true;
@@ -248,7 +229,6 @@ public class MostFederat {
         while (fedamb.isAdvancing) {
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
-
     }
 
     private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
@@ -267,13 +247,13 @@ public class MostFederat {
     //                     STATIC METHODS
     //----------------------------------------------------------
     public static void main(String[] args) {
-        String federateName = "mostFederate";
+        String federateName = "sygnalizacjaFederate";
         if (args.length != 0) {
             federateName = args[0];
         }
 
         try {
-            new ieee1516e.MostFED.MostFederat().runFederate(federateName);
+            new ieee1516e.SygnalizacjaFED.SygnalizacjaFederat().runFederate(federateName);
         } catch (Exception rtie) {
             rtie.printStackTrace();
         }

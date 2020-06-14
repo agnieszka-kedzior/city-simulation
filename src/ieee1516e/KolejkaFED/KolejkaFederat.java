@@ -9,6 +9,7 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import ieee1516e.Kolejka;
 import ieee1516e.Samochod;
 
 import java.io.BufferedReader;
@@ -43,6 +44,14 @@ public class KolejkaFederat {
     protected AttributeHandle mostCzyPelnyHandle;
     protected AttributeHandle mostKierunekHandle;
 
+    protected ObjectClassHandle autoHandle;
+    protected AttributeHandle autoIdHandle;
+    protected AttributeHandle autoPredkoscDrogaHandle;
+    protected AttributeHandle autoPredkoscMostHandle;
+    protected AttributeHandle autoDrogaHandle;
+
+    private Kolejka kolejkaMiastoA;
+    private Kolejka kolejkaMiastoB;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -90,9 +99,6 @@ public class KolejkaFederat {
             urle.printStackTrace();
             return;
         }
-        ////////////////////////////
-        // 4. join the federation //
-        ////////////////////////////
 
         URL[] joinModules = new URL[]{
                 (new File("foms/HLA.xml")).toURI().toURL()
@@ -126,8 +132,12 @@ public class KolejkaFederat {
         log("Time Policy Enabled");
 
         subscribeMost();
+        subscribeAuto();
         publishKolejke();
         log("Published and Subscribed");
+
+        kolejkaMiastoA = new Kolejka(1);
+        kolejkaMiastoB = new Kolejka(2);
 
         ObjectInstanceHandle objKolejkaHandle = rtiamb.registerObjectInstance(kolejkaHandle);
 
@@ -150,10 +160,6 @@ public class KolejkaFederat {
             log("Didn't destroy federation, federates still joined");
         }
     }
-
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////// Methods /////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
 
     private void enableTimePolicy() throws Exception {
         // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
@@ -183,8 +189,7 @@ public class KolejkaFederat {
         }
     }
 
-    private void subscribeMost() throws RTIexception
-    {
+    private void subscribeMost() throws RTIexception {
         this.mostHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Most");
         this.mostCzyPelnyHandle = rtiamb.getAttributeHandle(mostHandle, "czyPelny");
         this.mostCzyPustyHandle = rtiamb.getAttributeHandle(mostHandle,"czyPusty");
@@ -196,8 +201,26 @@ public class KolejkaFederat {
         mostAttributes.add(mostKierunekHandle);
 
         rtiamb.subscribeObjectClassAttributes(mostHandle, mostAttributes);
-        log("CashDesk Subscription Set");
+        log("Most Subscription Set");
     }
+
+    private void subscribeAuto() throws RTIexception {
+        this.autoHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Samochod");
+        this.autoIdHandle = rtiamb.getAttributeHandle(autoHandle,"id");
+        this.autoPredkoscDrogaHandle = rtiamb.getAttributeHandle(autoHandle, "vDroga");
+        this.autoPredkoscMostHandle = rtiamb.getAttributeHandle(autoHandle, "vMost");
+        this.autoDrogaHandle = rtiamb.getAttributeHandle(autoHandle,"sPrzebyta");
+
+        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
+        attributes.add(autoIdHandle);
+        attributes.add(autoPredkoscDrogaHandle);
+        attributes.add(autoPredkoscMostHandle);
+        attributes.add(autoDrogaHandle);
+
+        rtiamb.subscribeObjectClassAttributes(autoHandle, attributes);
+        log("Samochod Subscription Set");
+    }
+
     private void publishKolejke() throws RTIexception {
         this.kolejkaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Kolejka");
         this.kolejkaNumerHandle = rtiamb.getAttributeHandle(kolejkaHandle, "idKolejka");

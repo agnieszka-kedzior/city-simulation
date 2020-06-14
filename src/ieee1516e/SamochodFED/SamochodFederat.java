@@ -38,6 +38,7 @@ public class SamochodFederat {
 
     public static final int ITERATIONS = 20;
     public static final String READY_TO_RUN = "ReadyToRun";
+    public static final int SAMOCHOD_NUM = 10;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -52,6 +53,9 @@ public class SamochodFederat {
     protected AttributeHandle autoPredkoscDrogaHandle;
     protected AttributeHandle autoPredkoscMostHandle;
     protected AttributeHandle autoDrogaHandle;
+
+    private Random generator;
+    private int samCount;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -158,24 +162,19 @@ public class SamochodFederat {
         publishSamochod();
         log("Published and Subscribed");
 
-        /////////////////////////////////////
-        // 9. register an object to update //
-        /////////////////////////////////////
         ObjectInstanceHandle objAutoHandle = rtiamb.registerObjectInstance(autoHandle);
 
-        /////////////////////////////////////
-        // 10. do the main simulation loop //
-        /////////////////////////////////////
+        generator=new Random();
+        samCount = SAMOCHOD_NUM;
         while(fedamb.isRunning){
-            // 9.1 update the attribute values of the instance //
-            //updateAttributeValues(objectHandle);
+            samCount--;
+            if(samCount<0) {
+                break;
+            }
+            updateSamochodAttributeValues(objAutoHandle);
 
-            // 9.2 send an interaction
-            //sendInteraction();
-
-            // 9.3 request a time advance and wait until we get it
-            advanceTime(1.0);
-            log("Time Advanced to " + fedamb.federateTime);
+            advanceTime( generateTimeToNext());
+            log( "Time Advanced to " + fedamb.federateTime );
         }
 
         deleteObject(objAutoHandle);
@@ -194,14 +193,10 @@ public class SamochodFederat {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////// Helper Methods //////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
+    private int generateTimeToNext(){
+        return generator.nextInt();
+    }
 
-    /**
-     * This method will attempt to enable the various time related properties for
-     * the federate
-     */
     private void enableTimePolicy() throws Exception {
         // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
         //       Portico specific. You will have to alter this if you move to a
@@ -230,11 +225,6 @@ public class SamochodFederat {
         }
     }
 
-    /**
-     * This method will inform the RTI about the types of data that the federate will
-     * be creating, and the types of data we are interested in hearing about as other
-     * federates produce it.
-     */
     private void publishSamochod() throws RTIexception {
         this.autoHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Samochod");
         this.autoIdHandle = rtiamb.getAttributeHandle(autoHandle,"id");
@@ -251,6 +241,16 @@ public class SamochodFederat {
         rtiamb.publishObjectClassAttributes(autoHandle, attributes);
 
         log("Samochod Publishing Set");
+    }
+
+    private void updateSamochodAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception
+    {
+        AttributeHandleValueMap autoAttributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        rtiamb.updateAttributeValues( objectHandle, autoAttributes, generateTag(), time );
+
+        log("Aktualizacja atrybutów obiektu samochodu ");
     }
 
     private ObjectInstanceHandle registerObject() throws RTIexception {
@@ -289,12 +289,6 @@ public class SamochodFederat {
         rtiamb.updateAttributeValues(objectHandle, attributes, generateTag(), time);
     }
 
-    /**
-     * This method will send out an interaction of the type FoodServed.DrinkServed. Any
-     * federates which are subscribed to it will receive a notification the next time
-     * they tick(). This particular interaction has no parameters, so you pass an empty
-     * map, but the process of encoding them is the same as for attributes.
-     */
     private void sendInteraction() throws RTIexception {
         //////////////////////////
         // send the interaction //
@@ -309,11 +303,7 @@ public class SamochodFederat {
         //rtiamb.sendInteraction(servedHandle, parameters, generateTag(), time);
     }
 
-    /**
-     * This method will request a time advance to the current time, plus the given
-     * timestep. It will then wait until a notification of the time advance grant
-     * has been received.
-     */
+
     private void advanceTime(double timestep) throws RTIexception {
         // request the advance
         fedamb.isAdvancing = true;
@@ -327,11 +317,6 @@ public class SamochodFederat {
         }
     }
 
-    /**
-     * This method will attempt to delete the object instance of the given
-     * handle. We can only delete objects we created, or for which we own the
-     * privilegeToDelete attribute.
-     */
     private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
         rtiamb.deleteObjectInstance(handle, generateTag());
     }

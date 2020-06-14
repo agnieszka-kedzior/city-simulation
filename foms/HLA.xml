@@ -172,7 +172,7 @@
 				<order>TimeStamp</order>
 				<parameter>
 					<name>stanSwiatel</name>
-					<dataType>HLAASCIIchar</dataType>
+					<dataType>HLAASCIIstring</dataType>
 					<semantics>N/A</semantics>
 				</parameter>
 			</interactionClass>
