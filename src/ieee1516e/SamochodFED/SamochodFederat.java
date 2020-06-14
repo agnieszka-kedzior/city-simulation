@@ -1,5 +1,6 @@
 package ieee1516e.SamochodFED;
 
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
@@ -17,19 +18,6 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Random;
-
-
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleSet;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.CallbackModel;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.RTIambassador;
-import hla.rti1516e.ResignAction;
-import hla.rti1516e.RtiFactoryFactory;
 
 public class SamochodFederat {
     //----------------------------------------------------------
@@ -53,6 +41,11 @@ public class SamochodFederat {
     protected AttributeHandle autoPredkoscDrogaHandle;
     protected AttributeHandle autoPredkoscMostHandle;
     protected AttributeHandle autoDrogaHandle;
+
+    protected InteractionClassHandle dolaczenieDoKolejkiHandle;
+    protected ParameterHandle dolaczaAutoIdHandle;
+    protected InteractionClassHandle opuszczenieKolejkiHandle;
+    protected ParameterHandle opuszczaAutoIdHandle;
 
     private Random generator;
     private int samCount;
@@ -290,17 +283,11 @@ public class SamochodFederat {
     }
 
     private void sendInteraction() throws RTIexception {
-        //////////////////////////
-        // send the interaction //
-        //////////////////////////
-        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
-        //rtiamb.sendInteraction(servedHandle, parameters, generateTag());
 
-        // if you want to associate a particular timestamp with the
-        // interaction, you will have to supply it to the RTI. Here
-        // we send another interaction, this time with a timestamp:
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
-        //rtiamb.sendInteraction(servedHandle, parameters, generateTag(), time);
+
+        rtiamb.sendInteraction(dolaczenieDoKolejkiHandle, parameters, generateTag(), time);
     }
 
 
