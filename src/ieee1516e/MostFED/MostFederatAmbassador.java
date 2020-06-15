@@ -1,8 +1,13 @@
 package ieee1516e.MostFED;
 
 import hla.rti1516e.*;
+import hla.rti1516e.encoding.DecoderException;
+import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.HLAinteger32LE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eASCIIstring;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32LE;
 
 
 public class MostFederatAmbassador extends NullFederateAmbassador {
@@ -168,6 +173,20 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
+        if(interactionClass.equals(federate.zmianaSwiatelHandle)){
+            HLA1516eASCIIstring stan = new HLA1516eASCIIstring();
+
+            byte[] bytes = theParameters.get(federate.stanSwiatelHandle);
+            try {
+                stan.decode(bytes);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
+
+            log("Otrzymana została interakcja zmiana swiatla na " + stan.getValue());
+
+            federate.zmianaSwiatla(stan.getValue());
+        }
 
     }
 

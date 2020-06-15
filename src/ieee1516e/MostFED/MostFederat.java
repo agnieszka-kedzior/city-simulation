@@ -12,6 +12,7 @@ import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import ieee1516e.Most;
+import ieee1516e.StanSwiatel;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -127,7 +128,7 @@ public class MostFederat {
         enableTimePolicy();
         log("Time Policy Enabled");
 
-        subscribeSwiatla();
+        subscribeZmianaSwiatla();
         publishMost();
         log("Published and Subscribed");
 
@@ -136,10 +137,7 @@ public class MostFederat {
         most = new Most();
 
         while (fedamb.isRunning){
-            for (int i = 0; i < ITERATIONS; i++) {
-                log("Iteration executed ("+i+")");
-            }
-            updateSwiatla(objMostHandle);
+            updateSwiatla(objMostHandle, most.getStanSwiatel());
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
@@ -203,7 +201,7 @@ public class MostFederat {
         log("Most Publishing Set");
     }
 
-    private void subscribeSwiatla() throws RTIexception {
+    private void subscribeZmianaSwiatla() throws RTIexception {
         this.zmianaSwiatelHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zmianaSwiatel");
         this.stanSwiatelHandle = rtiamb.getParameterHandle(zmianaSwiatelHandle, "stanSwiatel");
 
@@ -211,16 +209,22 @@ public class MostFederat {
         log("Zmiana Swiatel Subscription Set");
     }
 
-    private void updateSwiatla( ObjectInstanceHandle objectClassHandle) throws RTIexception{
+    private void updateSwiatla(ObjectInstanceHandle objectClassHandle, StanSwiatel aktulanyStan) throws RTIexception{
         AttributeHandleValueMap mostAttributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
 
-        //HLAASCIIstring mostKierunek = encoderFactory.createHLAASCIIstring(stanSwiatel);
-        mostAttributes.put( mostKierunekHandle, stanSwiatelHandle.toString().getBytes());
+        HLAASCIIstring mostKierunek = encoderFactory.createHLAASCIIstring(aktulanyStan.toString());
+        mostAttributes.put( mostKierunekHandle, mostKierunek.toByteArray());
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( objectClassHandle, mostAttributes, generateTag(), time );
 
-        log("Zmiana swiatel: " + stanSwiatelHandle.toString().getBytes());
+        log("Aktualny stan swiatel: " + aktulanyStan);
+    }
+
+    public void zmianaSwiatla(String stan){
+        this.most.setStanSwiatel(StanSwiatel.valueOf(stan));
+
+        log("Zmiana swiatel: " + stan);
     }
 
     /**

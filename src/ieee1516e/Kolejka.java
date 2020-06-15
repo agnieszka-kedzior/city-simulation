@@ -6,12 +6,12 @@ import java.util.LinkedList;
 public class Kolejka {
 
     private Integer idKolejki;
-    private ArrayList<Samochod> kolejkaSamochod;
+    private LinkedList<Samochod> kolejkaSamochod;
 
     public Kolejka(Integer idKolejki)
     {
         this.idKolejki = idKolejki;
-        this.kolejkaSamochod = new ArrayList<>();
+        this.kolejkaSamochod = new LinkedList<>();
     }
 
     public void addAuto(Samochod samochod){

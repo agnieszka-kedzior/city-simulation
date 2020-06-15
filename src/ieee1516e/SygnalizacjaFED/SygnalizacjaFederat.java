@@ -211,6 +211,8 @@ public class SygnalizacjaFederat {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
+        System.out.println("Kierunek most? "+ this.mostKierunekHandle);
+
         HLAASCIIstring stanSwiatel = encoderFactory.createHLAASCIIstring(StanSwiatel.CZERWONY.toString());
         parameters.put(stanSwiatelHandle, stanSwiatel.toByteArray());
 

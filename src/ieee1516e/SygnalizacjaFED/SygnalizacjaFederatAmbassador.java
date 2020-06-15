@@ -2,9 +2,7 @@ package ieee1516e.SygnalizacjaFED;
 
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.DecoderException;
-import hla.rti1516e.encoding.HLAinteger16BE;
-import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 
@@ -66,18 +64,17 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
         System.out.println("FederateAmbassador: " + message);
     }
 
-    private short decodeNumCups(byte[] bytes) {
-        HLAinteger16BE value = federate.encoderFactory.createHLAinteger16BE();
-        // decode
-        try {
-            value.decode(bytes);
-            return value.getValue();
-        } catch (DecoderException de) {
-            de.printStackTrace();
+    protected ObjectInstanceHandle mostHandle = new ObjectInstanceHandle() {
+        @Override
+        public int encodedLength() {
             return 0;
         }
-    }
 
+        @Override
+        public void encode(byte[] bytes, int i) {
+
+        }
+    };
     //////////////////////////////////////////////////////////////////////////
     ////////////////////////// RTI Callback Methods //////////////////////////
     //////////////////////////////////////////////////////////////////////////
@@ -132,6 +129,8 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
                                        ObjectClassHandle theObjectClass,
                                        String objectName)
             throws FederateInternalError {
+        if(theObjectClass.equals(federate.mostHandle)) mostHandle = theObject;
+
         log("Discoverd Object: handle=" + theObject + ", classHandle=" +
                 theObjectClass + ", name=" + objectName);
     }
@@ -167,6 +166,48 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
                                        OrderType receivedOrdering,
                                        SupplementalReflectInfo reflectInfo)
             throws FederateInternalError {
+
+        StringBuilder builder = new StringBuilder( "Reflection for object:" );
+
+        builder.append( " handle=" + theObject );
+        builder.append( ", tag=" + new String(tag) );
+        if( time != null )
+        {
+            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+        }
+
+        // print the attribute information
+        builder.append( ", attributeCount=" + theAttributes.size() );
+        builder.append( "\n" );
+
+        HLAASCIIstring stanMostu;
+
+        for( AttributeHandle attributeHandle : theAttributes.keySet() )
+        {
+            builder.append( "\tattributeHandle=" );
+
+            if(attributeHandle.equals(federate.mostKierunekHandle)){
+                builder.append( attributeHandle );
+                builder.append( " (Most)" );
+                builder.append( ", attributeValue=" );
+                builder.append( theAttributes.get(attributeHandle).toString() );
+                stanMostu = federate.encoderFactory.createHLAASCIIstring();
+                try {
+                    stanMostu.decode(theAttributes.get(attributeHandle));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+            }
+            else
+            {
+                builder.append( attributeHandle );
+                builder.append( " (Unknown)   " );
+            }
+
+            builder.append( "\n" );
+        }
+
+        log( builder.toString() );
     }
 
     @Override

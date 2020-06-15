@@ -1,15 +1,20 @@
 package ieee1516e;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 public class Most {
 
     private boolean jestPusty;
     private boolean jestPelny;
     private StanSwiatel stanSwiatel;
     private Integer maxLiczbaSamochodow = 10;
+    private LinkedList<Samochod> przejazdzająceSamochod;
 
     public Most(){
-        jestPusty = true;
-        stanSwiatel = StanSwiatel.CZERWONY;
+        this.jestPusty = true;
+        this.stanSwiatel = StanSwiatel.CZERWONY;
+        this.przejazdzająceSamochod = new LinkedList<>();
     }
 
     public boolean isJestPusty() {
@@ -42,5 +47,13 @@ public class Most {
 
     public void setMaxLiczbaSamochodow(Integer maxLiczbaSamochodow) {
         this.maxLiczbaSamochodow = maxLiczbaSamochodow;
+    }
+
+    public LinkedList<Samochod> getPrzejazdzająceSamochod() {
+        return przejazdzająceSamochod;
+    }
+
+    public void setPrzejazdzająceSamochod(LinkedList<Samochod> przejazdzająceSamochod) {
+        this.przejazdzająceSamochod = przejazdzająceSamochod;
     }
 }

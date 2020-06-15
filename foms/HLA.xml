@@ -123,7 +123,7 @@
 				</attribute>
 				<attribute>
 					<name>kierunek</name>
-					<dataType>HLAfederateState</dataType>
+					<dataType>HLAASCIIstring</dataType>
 					<updateType>NA</updateType>
 					<updateCondition>On Change</updateCondition>
 					<ownership>NoTransfer</ownership>
