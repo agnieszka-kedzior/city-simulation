@@ -148,22 +148,7 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
                                    TransportationTypeHandle theTransport,
                                    SupplementalReceiveInfo receiveInfo)
             throws FederateInternalError {
-        if(interactionClass.equals(federate.dolaczenieDoKolejkiHandle)){
-            HLAinteger32LE autoId = new HLA1516eInteger32LE();
 
-            byte[] bytes = theParameters.get(federate.dolaczaAutoIdHandle);
-            try {
-                autoId.decode(bytes);
-            } catch (DecoderException e) {
-                e.printStackTrace();
-            }
-
-            log("otrzymałem interakcję dolaczenie do kolejki samochodu " + autoId.getValue());
-
-            federate.dodajDoKolejki(autoId.getValue());
-        } else if(interactionClass.equals(federate.opuszczenieKolejkiHandle)){
-            //federate.approachesFinished = true;
-        }
     }
 
     @Override
@@ -177,6 +162,22 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
+        if(interactionClass.equals(federate.dolaczenieDoKolejkiHandle)){
+            HLAinteger32LE autoId = new HLA1516eInteger32LE();
+
+            byte[] bytes = theParameters.get(federate.dolaczaAutoIdHandle);
+            try {
+                autoId.decode(bytes);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
+
+            log("Otrzymana została interakcja dolaczenie do kolejki samochodu id: " + autoId.getValue());
+
+            federate.dodajDoKolejki(autoId.getValue());
+        } else if(interactionClass.equals(federate.opuszczenieKolejkiHandle)){
+            //federate.approachesFinished = true;
+        }
 
     }
 

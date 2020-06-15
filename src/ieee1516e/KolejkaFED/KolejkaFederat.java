@@ -56,6 +56,7 @@ public class KolejkaFederat {
 
     private Kolejka kolejkaMiastoA;
     private Kolejka kolejkaMiastoB;
+
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -135,6 +136,9 @@ public class KolejkaFederat {
         enableTimePolicy();
         log("Time Policy Enabled");
 
+        kolejkaMiastoA = new Kolejka(1);
+        kolejkaMiastoB = new Kolejka(2);
+
         subscribeMost();
         subscribeAuto();
         publishKolejke();
@@ -142,10 +146,8 @@ public class KolejkaFederat {
         subscribeOpuszczenieKolejki();
         log("Published and Subscribed");
 
-        kolejkaMiastoA = new Kolejka(1);
-        kolejkaMiastoB = new Kolejka(2);
-
         ObjectInstanceHandle objKolejkaHandle = rtiamb.registerObjectInstance(kolejkaHandle);
+
 
         while (fedamb.isRunning){
             advanceTime(1.0);
@@ -256,13 +258,15 @@ public class KolejkaFederat {
     protected void dodajDoKolejki(int autoId){
         int tmp = (int) ( Math.random() * 2 + 1); // will return either 1 or 2
 
-        if (tmp == kolejkaMiastoA.getIdKolejki()){
-            this.kolejkaMiastoA.addSamochodow(new Samochod(autoId));
-        } else {
-            this.kolejkaMiastoB.addSamochodow(new Samochod(autoId));
+        Samochod noweAuto = new Samochod(autoId);
+
+        if(tmp == 1){
+            this.kolejkaMiastoA.addAuto(noweAuto);
+        }else {
+            this.kolejkaMiastoB.addAuto(noweAuto);
         }
 
-        log("Czeka na przejazd ("+autoId+")w kolejce " + tmp);
+        log("Samochod ("+autoId+") czeka na przejazd w kolejce " + tmp);
     }
 
     private ObjectInstanceHandle registerObject() throws RTIexception {

@@ -160,18 +160,17 @@ public class SamochodFederat {
         ObjectInstanceHandle objAutoHandle = rtiamb.registerObjectInstance(autoHandle);
         log( "Registered Object, handle=" + objAutoHandle );
 
-        samCount = SAMOCHOD_NUM;
+        for(int i = 0; i <= SAMOCHOD_NUM; i++){
+            sendInteractionDolaczenieDoKolejki(i);
+        }
 
+        /*
         while (fedamb.isRunning){
-            samCount--;
-            if(samCount<0) {
-                sendInteractionDolaczenieDoKolejki(samCount);
-            }
             //updateSamochodAttributeValues(objAutoHandle);
 
             advanceTime( 1.0);
             log( "Time Advanced to " + fedamb.federateTime );
-        }
+        }*/
 
         deleteObject(objAutoHandle);
         log("Deleted Object, handle=" + objAutoHandle);
@@ -255,7 +254,7 @@ public class SamochodFederat {
         parameters.put(dolaczaAutoIdHandle, auto.toByteArray());
 
         rtiamb.sendInteraction(dolaczenieDoKolejkiHandle, parameters, generateTag(), time);
-        log("Wysłanie interakcji dolaczenie do kolejki samochodu "+autoId);
+        log("Wysłanie interakcji dolaczenie do kolejki samochodu id: " + autoId);
     }
 
     private void sendInteractionOpuszczenieKolejki(int autoId) throws RTIexception {
