@@ -49,6 +49,7 @@ public class SamochodFederat {
 
     private Random generator;
     private int samCount;
+    private int samId;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -160,17 +161,24 @@ public class SamochodFederat {
         ObjectInstanceHandle objAutoHandle = rtiamb.registerObjectInstance(autoHandle);
         log( "Registered Object, handle=" + objAutoHandle );
 
-        for(int i = 0; i <= SAMOCHOD_NUM; i++){
-            sendInteractionDolaczenieDoKolejki(i);
-        }
+        generator=new Random();
+        samCount = SAMOCHOD_NUM;
 
-        /*
-        while (fedamb.isRunning){
+        while (fedamb.isRunning) {
+            // 9.1 update the attribute values of the instance //
             //updateSamochodAttributeValues(objAutoHandle);
 
-            advanceTime( 1.0);
-            log( "Time Advanced to " + fedamb.federateTime );
-        }*/
+            // 9.2 send an interaction
+            samCount--;
+            samId++;
+            if(samCount>0){
+                sendInteractionDolaczenieDoKolejki(samId);
+            }
+
+            // 9.3 request a time advance and wait until we get it
+            advanceTime(generator.nextInt(5) +1);
+            log("Time Advanced to " + fedamb.federateTime);
+        }
 
         deleteObject(objAutoHandle);
         log("Deleted Object, handle=" + objAutoHandle);

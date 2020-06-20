@@ -5,32 +5,30 @@ import java.util.LinkedList;
 
 public class Most {
 
-    private boolean jestPusty;
-    private boolean jestPelny;
+    private static final Integer MAX_NUM_AUT = 10;
+
     private StanSwiatel stanSwiatel;
-    private Integer maxLiczbaSamochodow = 10;
     private LinkedList<Samochod> przejazdzająceSamochod;
 
     public Most(){
-        this.jestPusty = true;
         this.stanSwiatel = StanSwiatel.CZERWONY;
         this.przejazdzająceSamochod = new LinkedList<>();
     }
 
-    public boolean isJestPusty() {
-        return jestPusty;
+    public boolean czyJestPusty() {
+        if(przejazdzająceSamochod.size() == 0){
+            return true;
+        }else {
+            return false;
+        }
     }
 
-    public void setJestPusty(boolean jestPusty) {
-        this.jestPusty = jestPusty;
-    }
-
-    public boolean isJestPelny() {
-        return jestPelny;
-    }
-
-    public void setJestPelny(boolean jestPelny) {
-        this.jestPelny = jestPelny;
+    public boolean czyJestPelny() {
+        if(przejazdzająceSamochod.size() >= MAX_NUM_AUT){
+            return true;
+        }else {
+            return false;
+        }
     }
 
     public StanSwiatel getStanSwiatel() {
@@ -39,14 +37,6 @@ public class Most {
 
     public void setStanSwiatel(StanSwiatel stanSwiatel) {
         this.stanSwiatel = stanSwiatel;
-    }
-
-    public Integer getMaxLiczbaSamochodow() {
-        return maxLiczbaSamochodow;
-    }
-
-    public void setMaxLiczbaSamochodow(Integer maxLiczbaSamochodow) {
-        this.maxLiczbaSamochodow = maxLiczbaSamochodow;
     }
 
     public LinkedList<Samochod> getPrzejazdzająceSamochod() {

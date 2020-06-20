@@ -1,9 +1,7 @@
 package ieee1516e.KolejkaFED;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.DecoderException;
-import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.encoding.HLAinteger32LE;
+import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
@@ -32,7 +30,29 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
     protected boolean isReadyToRun = false;
 
     protected boolean isRunning = true;
-    //----------------------------------------------------------
+
+    protected ObjectInstanceHandle autoHandle = new ObjectInstanceHandle() {
+        @Override
+        public int encodedLength() {
+            return 0;
+        }
+
+        @Override
+        public void encode(byte[] bytes, int i) {
+
+        }
+    };
+    protected ObjectInstanceHandle mostHandle = new ObjectInstanceHandle() {
+        @Override
+        public int encodedLength() {
+            return 0;
+        }
+
+        @Override
+        public void encode(byte[] bytes, int i) {
+        }
+    };
+            //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
 
@@ -137,7 +157,59 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
                                         SupplementalReflectInfo reflectInfo )
             throws FederateInternalError
     {
+        StringBuilder builder = new StringBuilder( "Reflection for object:" );
 
+        builder.append( " handle=" + theObject );
+        builder.append( ", tag=" + new String(tag) );
+        if( time != null )
+        {
+            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+        }
+
+
+        builder.append( ", attributeCount=" + theAttributes.size() );
+
+        HLAASCIIstring kierunekMostu = federate.encoderFactory.createHLAASCIIstring();
+        HLAboolean czyPusty = federate.encoderFactory.createHLAboolean();
+        HLAboolean czyPelny = federate.encoderFactory.createHLAboolean();
+
+        for( AttributeHandle attributeHandle : theAttributes.keySet() )
+        {
+            builder.append( "\nattributeHandle=" );
+
+            if(attributeHandle.equals(federate.mostCzyPustyHandle)){
+                builder.append( attributeHandle );
+                builder.append( " (Most)" );
+                try {
+                    czyPusty.decode(theAttributes.get(attributeHandle));
+                    builder.append( " czy pusty: " + czyPusty.getValue());
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(attributeHandle.equals(federate.mostCzyPelnyHandle)){
+                builder.append( attributeHandle );
+                builder.append( " (Most)" );
+                try {
+                    czyPelny.decode(theAttributes.get(attributeHandle));
+                    builder.append( " czy pelny: " + czyPelny.getValue());
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(attributeHandle.equals(federate.mostKierunekHandle)){
+                builder.append( attributeHandle );
+                builder.append( " (Most)" );
+                try {
+                    kierunekMostu.decode(theAttributes.get(attributeHandle));
+                    builder.append( " stan: " + kierunekMostu.getValue());
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        log( builder.toString() );
     }
 
     @Override

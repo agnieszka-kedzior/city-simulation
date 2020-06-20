@@ -3,7 +3,7 @@ package ieee1516e.MostFED;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAASCIIstring;
-import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.HLAboolean;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
@@ -12,6 +12,7 @@ import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import ieee1516e.Most;
+import ieee1516e.Samochod;
 import ieee1516e.StanSwiatel;
 
 import java.io.BufferedReader;
@@ -19,15 +20,14 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 
 
 public class MostFederat {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
     //----------------------------------------------------------
-    public static final int ITERATIONS = 20;
     public static final String READY_TO_RUN = "ReadyToRun";
-    private static  final int MOST_CAR_AMOUNT = 5;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -45,7 +45,8 @@ public class MostFederat {
     protected InteractionClassHandle zmianaSwiatelHandle;
     protected ParameterHandle stanSwiatelHandle;
 
-    private Most most;
+    protected Most most;
+
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -137,7 +138,7 @@ public class MostFederat {
         most = new Most();
 
         while (fedamb.isRunning){
-            updateSwiatla(objMostHandle, most.getStanSwiatel());
+            updateStanMostu(objMostHandle, most.getStanSwiatel());
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
@@ -209,16 +210,21 @@ public class MostFederat {
         log("Zmiana Swiatel Subscription Set");
     }
 
-    private void updateSwiatla(ObjectInstanceHandle objectClassHandle, StanSwiatel aktulanyStan) throws RTIexception{
+    private void updateStanMostu(ObjectInstanceHandle objectClassHandle, StanSwiatel aktulanyStan) throws RTIexception{
         AttributeHandleValueMap mostAttributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
 
         HLAASCIIstring mostKierunek = encoderFactory.createHLAASCIIstring(aktulanyStan.toString());
+        HLAboolean czyPusty = encoderFactory.createHLAboolean(most.czyJestPusty());
+        HLAboolean czyPelny = encoderFactory.createHLAboolean(most.czyJestPelny());
+
         mostAttributes.put( mostKierunekHandle, mostKierunek.toByteArray());
+        mostAttributes.put( mostCzyPustyHandle, czyPusty.toByteArray());
+        mostAttributes.put( mostCzyPelnyHandle, czyPelny.toByteArray());
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( objectClassHandle, mostAttributes, generateTag(), time );
 
-        log("Aktualny stan swiatel: " + aktulanyStan);
+        log("Aktualny stan mostu: swiatla? " + aktulanyStan + " czy pusty? "+  most.czyJestPusty() + " czy pelny? " + most.czyJestPelny());
     }
 
     public void zmianaSwiatla(String stan){

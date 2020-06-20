@@ -176,7 +176,6 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
             builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
         }
 
-        // print the attribute information
         builder.append( ", attributeCount=" + theAttributes.size() );
         builder.append( "\n" );
 
@@ -189,8 +188,6 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
             if(attributeHandle.equals(federate.mostKierunekHandle)){
                 builder.append( attributeHandle );
                 builder.append( " (Most)" );
-                //builder.append( ", attributeValue=" );
-                //builder.append( theAttributes.get(attributeHandle).toString() );
                 try {
                     stanMostu.decode(theAttributes.get(attributeHandle));
                     builder.append( " stan: " + stanMostu.getValue());
@@ -203,8 +200,6 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
                 builder.append( attributeHandle );
                 builder.append( " (Unknown)   " );
             }
-
-            //builder.append( "\n" );
         }
 
         federate.aktulanyStanMostu.setValue(stanMostu.getValue());

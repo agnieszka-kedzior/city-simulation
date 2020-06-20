@@ -148,7 +148,6 @@ public class KolejkaFederat {
 
         ObjectInstanceHandle objKolejkaHandle = rtiamb.registerObjectInstance(kolejkaHandle);
 
-
         while (fedamb.isRunning){
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
@@ -262,11 +261,11 @@ public class KolejkaFederat {
 
         if(tmp == 1){
             this.kolejkaMiastoA.addAuto(noweAuto);
+            log("Samochod ("+autoId+") czeka na przejazd w kolejce z Miasta A");
         }else {
             this.kolejkaMiastoB.addAuto(noweAuto);
+            log("Samochod ("+autoId+") czeka na przejazd w kolejce z Miasta B");
         }
-
-        log("Samochod ("+autoId+") czeka na przejazd w kolejce " + tmp);
     }
 
     private ObjectInstanceHandle registerObject() throws RTIexception {

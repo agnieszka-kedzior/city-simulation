@@ -65,18 +65,6 @@ public class SamochodFederatAmbassador extends NullFederateAmbassador {
         System.out.println("FederateAmbassador: " + message);
     }
 
-    private short decodeNumCups(byte[] bytes) {
-        HLAinteger16BE value = federate.encoderFactory.createHLAinteger16BE();
-        // decode
-        try {
-            value.decode(bytes);
-            return value.getValue();
-        } catch (DecoderException de) {
-            de.printStackTrace();
-            return 0;
-        }
-    }
-
     //////////////////////////////////////////////////////////////////////////
     ////////////////////////// RTI Callback Methods //////////////////////////
     //////////////////////////////////////////////////////////////////////////
