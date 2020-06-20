@@ -180,20 +180,20 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
         builder.append( ", attributeCount=" + theAttributes.size() );
         builder.append( "\n" );
 
-        HLAASCIIstring stanMostu;
+        HLAASCIIstring stanMostu = federate.encoderFactory.createHLAASCIIstring();
 
         for( AttributeHandle attributeHandle : theAttributes.keySet() )
         {
-            builder.append( "\tattributeHandle=" );
+            builder.append( "attributeHandle=" );
 
             if(attributeHandle.equals(federate.mostKierunekHandle)){
                 builder.append( attributeHandle );
                 builder.append( " (Most)" );
-                builder.append( ", attributeValue=" );
-                builder.append( theAttributes.get(attributeHandle).toString() );
-                stanMostu = federate.encoderFactory.createHLAASCIIstring();
+                //builder.append( ", attributeValue=" );
+                //builder.append( theAttributes.get(attributeHandle).toString() );
                 try {
                     stanMostu.decode(theAttributes.get(attributeHandle));
+                    builder.append( " stan: " + stanMostu.getValue());
                 } catch (DecoderException e) {
                     e.printStackTrace();
                 }
@@ -204,8 +204,10 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
                 builder.append( " (Unknown)   " );
             }
 
-            builder.append( "\n" );
+            //builder.append( "\n" );
         }
+
+        federate.aktulanyStanMostu.setValue(stanMostu.getValue());
 
         log( builder.toString() );
     }

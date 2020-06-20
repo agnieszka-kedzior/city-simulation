@@ -38,6 +38,7 @@ public class SygnalizacjaFederat {
 
     protected ObjectClassHandle mostHandle;
     protected AttributeHandle mostKierunekHandle;
+    protected HLAASCIIstring aktulanyStanMostu;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -131,19 +132,20 @@ public class SygnalizacjaFederat {
         enableTimePolicy();
         log("Time Policy Enabled");
 
+        aktulanyStanMostu = this.encoderFactory.createHLAASCIIstring();
+
         subscribeMost();
         publishSwiatla();
         log("Published and Subscribed");
 
         while (fedamb.isRunning) {
             // 9.1 update the attribute values of the instance //
-            //updateAttributeValues(objectHandle);
 
             // 9.2 send an interaction
             sendInteractionZmianaSwiatel();
 
             // 9.3 request a time advance and wait until we get it
-            advanceTime(1.0);
+            advanceTime(5.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
 
@@ -211,13 +213,18 @@ public class SygnalizacjaFederat {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
-        System.out.println("Kierunek most? "+ this.mostKierunekHandle);
+        HLAASCIIstring czerwone = encoderFactory.createHLAASCIIstring(StanSwiatel.CZERWONY.toString());
+        HLAASCIIstring zielone = encoderFactory.createHLAASCIIstring(StanSwiatel.ZIELONY.toString());
 
-        HLAASCIIstring stanSwiatel = encoderFactory.createHLAASCIIstring(StanSwiatel.CZERWONY.toString());
-        parameters.put(stanSwiatelHandle, stanSwiatel.toByteArray());
+        if(aktulanyStanMostu.getValue().contentEquals(StanSwiatel.CZERWONY.toString())){
+            parameters.put(stanSwiatelHandle, zielone.toByteArray());
+            log("Wysłanie interakcji zmiana swiatel na zielone");
+        }else {
+            parameters.put(stanSwiatelHandle, czerwone.toByteArray());
+            log("Wysłanie interakcji zmiana swiatel na czerwone");
+        }
 
         rtiamb.sendInteraction(zmianaSwiatelHandle, parameters, generateTag(), time);
-        log("Wysłanie interakcji zmiana swiatel");
     }
 
     private void advanceTime(double timestep) throws RTIexception {
