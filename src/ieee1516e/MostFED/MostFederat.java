@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedList;
+import java.util.Random;
 
 
 public class MostFederat {
@@ -29,6 +30,7 @@ public class MostFederat {
     //                    STATIC VARIABLES
     //----------------------------------------------------------
     public static final String READY_TO_RUN = "ReadyToRun";
+    public static final int DROGA_MOSTU = 10;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -54,6 +56,7 @@ public class MostFederat {
     protected ParameterHandle zjazdAutoIdHandle;
 
     protected Most most;
+    private Random generator;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -146,12 +149,15 @@ public class MostFederat {
         ObjectInstanceHandle objMostHandle = rtiamb.registerObjectInstance(mostHandle);
 
         most = new Most();
+        generator=new Random();
 
         while (fedamb.isRunning){
             updateStanMostu(objMostHandle, most.getStanSwiatel());
 
-            if (most.getSamochodyNaMoscie().size() > 0){
-                sendInteractionZjazdZMostu();
+            if(generator.nextInt(5) >= 2.5) {
+                if (most.getSamochodyNaMoscie().size() > 0) {
+                    sendInteractionZjazdZMostu();
+                }
             }
 
             advanceTime(1.0);

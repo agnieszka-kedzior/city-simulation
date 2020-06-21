@@ -42,6 +42,7 @@ public class KolejkaFederat {
     protected ObjectClassHandle kolejkaHandle;
     protected AttributeHandle kolejkaNumerHandle;
     protected AttributeHandle kolejkaPierwszyHandle;
+    protected AttributeHandle iloscSamochodowHandle;
 
     protected ObjectClassHandle mostHandle;
     protected AttributeHandle mostCzyPustyHandle;
@@ -245,10 +246,12 @@ public class KolejkaFederat {
         this.kolejkaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Kolejka");
         this.kolejkaNumerHandle = rtiamb.getAttributeHandle(kolejkaHandle, "idKolejka");
         this.kolejkaPierwszyHandle = rtiamb.getAttributeHandle(kolejkaHandle,"idPierwszy");
+        this.iloscSamochodowHandle = rtiamb.getAttributeHandle(kolejkaHandle, "iloscSamochodow");
 
         AttributeHandleSet kolejkaAttributes = rtiamb.getAttributeHandleSetFactory().create();
         kolejkaAttributes.add(kolejkaNumerHandle);
         kolejkaAttributes.add(kolejkaPierwszyHandle);
+        kolejkaAttributes.add(iloscSamochodowHandle);
 
         rtiamb.publishObjectClassAttributes(kolejkaHandle, kolejkaAttributes);
 
@@ -338,13 +341,19 @@ public class KolejkaFederat {
 
         HLAinteger32LE idKolejka = encoderFactory.createHLAinteger32LE(kolejkaId);
         HLAinteger32LE idPierwszy;
+        HLAinteger32LE iloscSamochodow;
 
         kolejkaAttributes.put( kolejkaNumerHandle, idKolejka.toByteArray());
         builder.append(kolejkaId);
 
         if(zwrocKolejkeoId(kolejkaId).getKolejkaSamochod().size() > 0 ){
             idPierwszy = encoderFactory.createHLAinteger32LE(zwrocKolejkeoId(kolejkaId).pierwszeAuto().getIdSamochod());
-            builder.append(", pierwszym elementem jest samochod o id " + idPierwszy.getValue());
+            iloscSamochodow = encoderFactory.createHLAinteger32LE(zwrocKolejkeoId(kolejkaId).getKolejkaSamochod().size());
+
+            kolejkaAttributes.put( kolejkaPierwszyHandle, idPierwszy.toByteArray());
+            kolejkaAttributes.put( iloscSamochodowHandle, iloscSamochodow.toByteArray());
+
+            builder.append(", kolejka ma " + iloscSamochodow.getValue() +" samochodow a pierwszym elementem jest samochod o id " + idPierwszy.getValue());
         }else {
             builder.append(", kolejka jest pusta");
         }

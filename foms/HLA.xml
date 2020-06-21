@@ -85,8 +85,8 @@
 					<semantics>N/A</semantics>
 				</attribute>
 				<attribute>
-					<name>Samochody</name>
-					<dataType>HLAargumentList</dataType>
+					<name>iloscSamochodow</name>
+					<dataType>HLAinteger32LE</dataType>
 					<updateType>NA</updateType>
 					<updateCondition>On Change</updateCondition>
 					<ownership>NoTransfer</ownership>
