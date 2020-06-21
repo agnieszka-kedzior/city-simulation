@@ -1,6 +1,5 @@
 package ieee1516e;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class Most {
@@ -8,15 +7,15 @@ public class Most {
     private static final Integer MAX_NUM_AUT = 10;
 
     private StanSwiatel stanSwiatel;
-    private LinkedList<Samochod> przejazdzająceSamochod;
+    private LinkedList<Samochod> samochodyNaMoscie;
 
     public Most(){
         this.stanSwiatel = StanSwiatel.CZERWONY;
-        this.przejazdzająceSamochod = new LinkedList<>();
+        this.samochodyNaMoscie = new LinkedList<>();
     }
 
     public boolean czyJestPusty() {
-        if(przejazdzająceSamochod.size() == 0){
+        if(samochodyNaMoscie.size() == 0){
             return true;
         }else {
             return false;
@@ -24,7 +23,7 @@ public class Most {
     }
 
     public boolean czyJestPelny() {
-        if(przejazdzająceSamochod.size() >= MAX_NUM_AUT){
+        if(samochodyNaMoscie.size() >= MAX_NUM_AUT){
             return true;
         }else {
             return false;
@@ -39,11 +38,19 @@ public class Most {
         this.stanSwiatel = stanSwiatel;
     }
 
-    public LinkedList<Samochod> getPrzejazdzająceSamochod() {
-        return przejazdzająceSamochod;
+    public void dodajPrzejezdzajacySamochod(Samochod samochod){
+        samochodyNaMoscie.add(samochod);
     }
 
-    public void setPrzejazdzająceSamochod(LinkedList<Samochod> przejazdzająceSamochod) {
-        this.przejazdzająceSamochod = przejazdzająceSamochod;
+    public void usunPrzejezdzajacySamochod(Samochod samochod){
+        samochodyNaMoscie.remove(samochod);
+    }
+
+    public Samochod pierwszeAuto(){
+        return samochodyNaMoscie.get(0);
+    }
+
+    public LinkedList<Samochod> getSamochodyNaMoscie() {
+        return samochodyNaMoscie;
     }
 }

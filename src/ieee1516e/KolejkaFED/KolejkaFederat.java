@@ -2,6 +2,7 @@ package ieee1516e.KolejkaFED;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
+import hla.rti1516e.encoding.HLAinteger32LE;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
@@ -51,11 +52,16 @@ public class KolejkaFederat {
 
     protected InteractionClassHandle dolaczenieDoKolejkiHandle;
     protected ParameterHandle dolaczaAutoIdHandle;
-    protected InteractionClassHandle opuszczenieKolejkiHandle;
-    protected ParameterHandle opuszczaAutoIdHandle;
+
+    protected InteractionClassHandle wjazdNaMostHandle;
+    protected ParameterHandle wjazdAutoIdHandle;
+    protected ParameterHandle wjazdPredkoscAutaHandle;
 
     private Kolejka kolejkaMiastoA;
     private Kolejka kolejkaMiastoB;
+    protected Boolean wjazdNaMostMiastoA;
+    protected Boolean wjazdNaMostMiastoB;
+    protected String przejazdDlaMiasta;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -139,17 +145,41 @@ public class KolejkaFederat {
         kolejkaMiastoA = new Kolejka(1);
         kolejkaMiastoB = new Kolejka(2);
 
+        wjazdNaMostMiastoA = false;
+        wjazdNaMostMiastoB = false;
+        przejazdDlaMiasta = "N/A";
+
         subscribeMost();
         subscribeAuto();
         publishKolejke();
+        publishWjazdNaMost();
         subscribeDolaczenieDoKolejki();
-        subscribeOpuszczenieKolejki();
         log("Published and Subscribed");
 
         ObjectInstanceHandle objKolejkaHandle = rtiamb.registerObjectInstance(kolejkaHandle);
 
         while (fedamb.isRunning){
             advanceTime(1.0);
+            if(przejazdDlaMiasta.equals("A") && wjazdNaMostMiastoA && !wjazdNaMostMiastoB){
+                if(kolejkaMiastoA.getKolejkaSamochod().size() > 0){
+                    sendInteractionWjazdNaMost(kolejkaMiastoA.pierwszeAuto().getIdSamochod());
+                    kolejkaMiastoA.removeAuto(kolejkaMiastoA.pierwszeAuto());
+                }
+            }else if(przejazdDlaMiasta.equals("A") && wjazdNaMostMiastoA && wjazdNaMostMiastoB){
+                log("Z mostu zjezdzają samochody z miasta B");
+            }else if(przejazdDlaMiasta.equals("A") && !wjazdNaMostMiastoA && !wjazdNaMostMiastoB){
+                log("Most jest pełny, ruch z miasta A wstrzymany");
+            }else if(przejazdDlaMiasta.equals("B") && wjazdNaMostMiastoB && !wjazdNaMostMiastoA){
+                if(kolejkaMiastoB.getKolejkaSamochod().size() > 0){
+                    sendInteractionWjazdNaMost(kolejkaMiastoB.pierwszeAuto().getIdSamochod());
+                    kolejkaMiastoB.removeAuto(kolejkaMiastoB.pierwszeAuto());
+                }
+            }else if(przejazdDlaMiasta.equals("B") && !wjazdNaMostMiastoB && wjazdNaMostMiastoA){
+                log("Z mostu zjezdzają samochody z miasta A");
+            }else if(przejazdDlaMiasta.equals("B") && !wjazdNaMostMiastoB && !wjazdNaMostMiastoA){
+                log("Most jest pełny, ruch z miasta B wstrzymany");
+            }
+
             log("Time Advanced to " + fedamb.federateTime);
         }
 
@@ -242,17 +272,31 @@ public class KolejkaFederat {
         log("Kolejka Publishing Set");
     }
 
+    private void publishWjazdNaMost() throws RTIexception {
+        this.wjazdNaMostHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.wjazdPojadu");
+        this.wjazdAutoIdHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "idSamochodu");
+        this.wjazdPredkoscAutaHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "vMost");
+        rtiamb.publishInteractionClass(wjazdNaMostHandle);
+        log("Wjazd na Most Publishing Set");
+    }
+
+    private void sendInteractionWjazdNaMost(int autoId) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+
+        HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(autoId);
+        parameters.put(wjazdAutoIdHandle, auto.toByteArray());
+
+        rtiamb.sendInteraction(wjazdNaMostHandle, parameters, generateTag(), time);
+        log("Wysłanie interakcji wjazd na most samochodu id: " + autoId);
+    }
+
     private void subscribeDolaczenieDoKolejki() throws RTIexception {
         this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
         this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
         rtiamb.subscribeInteractionClass(dolaczenieDoKolejkiHandle);
     }
 
-    private void subscribeOpuszczenieKolejki() throws RTIexception {
-        this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.opuszczenieKolejki");
-        this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
-        rtiamb.subscribeInteractionClass(dolaczenieDoKolejkiHandle);
-    }
 
     protected void dodajDoKolejki(int autoId){
         int tmp = (int) ( Math.random() * 2 + 1); // will return either 1 or 2

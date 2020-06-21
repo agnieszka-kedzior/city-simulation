@@ -170,14 +170,14 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
         StringBuilder builder = new StringBuilder( "Reflection for object:" );
 
         builder.append( " handle=" + theObject );
+        /*
         builder.append( ", tag=" + new String(tag) );
         if( time != null )
         {
             builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
+        }*/
 
         builder.append( ", attributeCount=" + theAttributes.size() );
-        builder.append( "\n" );
 
         HLAASCIIstring stanMostu = federate.encoderFactory.createHLAASCIIstring();
 

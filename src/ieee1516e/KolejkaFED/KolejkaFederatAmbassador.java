@@ -4,6 +4,7 @@ import hla.rti1516e.*;
 import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import ieee1516e.StanSwiatel;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32LE;
 
@@ -121,6 +122,7 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
                                        ObjectClassHandle theObjectClass,
                                        String objectName)
             throws FederateInternalError {
+        if(theObjectClass.equals(federate.mostHandle)) mostHandle = theObject;
         log("Discoverd Object: handle=" + theObject + ", classHandle=" +
                 theObjectClass + ", name=" + objectName);
     }
@@ -209,7 +211,54 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
             }
         }
 
-        log( builder.toString() );
+        //log( builder.toString() );
+
+        if (theObject.equals(mostHandle)) {
+            if(kierunekMostu.getValue().contentEquals(StanSwiatel.CZERWONY.toString())){
+                log("Zielone swiatlo dla Miasta A");
+                federate.przejazdDlaMiasta = "A";
+
+                if(federate.wjazdNaMostMiastoB) {
+                    if(czyPusty.getValue()){
+                        federate.wjazdNaMostMiastoB = false;
+
+                        if(!czyPelny.getValue()){
+                            federate.wjazdNaMostMiastoA = true;
+                        }else {
+                            federate.wjazdNaMostMiastoA = false;
+                        }
+                    }
+                }else {
+                    if(!czyPelny.getValue()){
+                        federate.wjazdNaMostMiastoA = true;
+                    }else {
+                        federate.wjazdNaMostMiastoA = false;
+                    }
+                }
+
+            }else if(kierunekMostu.getValue().contentEquals(StanSwiatel.ZIELONY.toString())) {
+                log("Zielone swiatlo dla Miasta B");
+                federate.przejazdDlaMiasta = "B";
+
+                if (federate.wjazdNaMostMiastoA){
+                    if(czyPusty.getValue()){
+                        federate.wjazdNaMostMiastoA = false;
+
+                        if(!czyPelny.getValue()){
+                            federate.wjazdNaMostMiastoB = true;
+                        }else {
+                            federate.wjazdNaMostMiastoB = false;
+                        }
+                    }
+                }else {
+                    if(!czyPelny.getValue()){
+                        federate.wjazdNaMostMiastoB = true;
+                    }else {
+                        federate.wjazdNaMostMiastoB = false;
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -247,8 +296,6 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
             log("Otrzymana została interakcja dolaczenie do kolejki samochodu id: " + autoId.getValue());
 
             federate.dodajDoKolejki(autoId.getValue());
-        } else if(interactionClass.equals(federate.opuszczenieKolejkiHandle)){
-            //federate.approachesFinished = true;
         }
 
     }

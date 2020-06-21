@@ -186,6 +186,19 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
             log("Otrzymana została interakcja zmiana swiatla na " + stan.getValue());
 
             federate.zmianaSwiatla(stan.getValue());
+        } else if(interactionClass.equals(federate.wjazdNaMostHandle)){
+            HLAinteger32LE autoId = new HLA1516eInteger32LE();
+
+            byte[] bytes = theParameters.get(federate.wjazdAutoIdHandle);
+            try {
+                autoId.decode(bytes);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
+
+            log("Otrzymana została interakcja wjazd samochodu o id " + autoId.getValue());
+
+            federate.wjazdSamochodu(autoId.getValue());
         }
 
     }

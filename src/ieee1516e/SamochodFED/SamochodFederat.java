@@ -23,10 +23,8 @@ public class SamochodFederat {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
     //----------------------------------------------------------
-
-    public static final int ITERATIONS = 20;
     public static final String READY_TO_RUN = "ReadyToRun";
-    public static final int SAMOCHOD_NUM = 10;
+    public static final int SAMOCHOD_NUM = 21;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -44,8 +42,6 @@ public class SamochodFederat {
 
     protected InteractionClassHandle dolaczenieDoKolejkiHandle;
     protected ParameterHandle dolaczaAutoIdHandle;
-    protected InteractionClassHandle opuszczenieKolejkiHandle;
-    protected ParameterHandle opuszczaAutoIdHandle;
 
     private Random generator;
     private int samCount;
@@ -155,7 +151,6 @@ public class SamochodFederat {
         //////////////////////////////
         publishSamochod();
         publishDolaczenieDoKolejki();
-        publishOpuszczenieKolejki();
         log("Published and Subscribed");
 
         ObjectInstanceHandle objAutoHandle = rtiamb.registerObjectInstance(autoHandle);
@@ -248,12 +243,6 @@ public class SamochodFederat {
         rtiamb.publishInteractionClass(dolaczenieDoKolejkiHandle);
     }
 
-    private void publishOpuszczenieKolejki() throws RTIexception {
-        this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.opuszczenieKolejki");
-        this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
-        rtiamb.publishInteractionClass(dolaczenieDoKolejkiHandle);
-    }
-
     private void sendInteractionDolaczenieDoKolejki(int autoId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
@@ -263,17 +252,6 @@ public class SamochodFederat {
 
         rtiamb.sendInteraction(dolaczenieDoKolejkiHandle, parameters, generateTag(), time);
         log("Wysłanie interakcji dolaczenie do kolejki samochodu id: " + autoId);
-    }
-
-    private void sendInteractionOpuszczenieKolejki(int autoId) throws RTIexception {
-        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
-        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
-
-        HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(autoId);
-        parameters.put(opuszczaAutoIdHandle, auto.toByteArray());
-
-        rtiamb.sendInteraction(opuszczenieKolejkiHandle, parameters, generateTag(), time);
-        log("Wysłanie interakcji opuszczenie kolejki");
     }
 
     private void updateSamochodAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception
@@ -289,47 +267,6 @@ public class SamochodFederat {
     private ObjectInstanceHandle registerObject() throws RTIexception {
         return rtiamb.registerObjectInstance(autoHandle);
     }
-
-    private void updateAttributeValues(ObjectInstanceHandle objectHandle) throws RTIexception {
-        ///////////////////////////////////////////////
-        // create the necessary container and values //
-        ///////////////////////////////////////////////
-        // create a new map with an initial capacity - this will grow as required
-        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
-
-        // create the collection to store the values in, as you can see
-        // this is quite a lot of work. You don't have to use the encoding
-        // helpers if you don't want. The RTI just wants an arbitrary byte[]
-
-        // generate the value for the number of cups (same as the timestep)
-        HLAinteger16BE cupsValue = encoderFactory.createHLAinteger16BE(getTimeAsShort());
-        //attributes.put(cupsHandle, cupsValue.toByteArray());
-
-        // generate the value for the flavour on our magically flavour changing drink
-        // the values for the enum are defined in the FOM
-        int randomValue = 101 + new Random().nextInt(3);
-        HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE(randomValue);
-        //attributes.put(flavHandle, flavValue.toByteArray());
-
-        //////////////////////////
-        // do the actual update //
-        //////////////////////////
-        rtiamb.updateAttributeValues(objectHandle, attributes, generateTag());
-
-        // note that if you want to associate a particular timestamp with the
-        // update. here we send another update, this time with a timestamp:
-        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
-        rtiamb.updateAttributeValues(objectHandle, attributes, generateTag(), time);
-    }
-
-    private void sendInteraction() throws RTIexception {
-
-        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
-        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
-
-        rtiamb.sendInteraction(dolaczenieDoKolejkiHandle, parameters, generateTag(), time);
-    }
-
 
     private void advanceTime(double timestep) throws RTIexception {
         // request the advance

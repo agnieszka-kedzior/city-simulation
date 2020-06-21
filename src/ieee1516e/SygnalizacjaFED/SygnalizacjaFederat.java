@@ -21,8 +21,7 @@ public class SygnalizacjaFederat {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
     //----------------------------------------------------------
-
-    public static final int ITERATIONS = 20;
+    public static final int ZMIANA_SWIATLA = 10;
     public static final String READY_TO_RUN = "ReadyToRun";
 
     //----------------------------------------------------------
@@ -145,7 +144,7 @@ public class SygnalizacjaFederat {
             sendInteractionZmianaSwiatel();
 
             // 9.3 request a time advance and wait until we get it
-            advanceTime(5.0);
+            advanceTime(ZMIANA_SWIATLA);
             log("Time Advanced to " + fedamb.federateTime);
         }
 

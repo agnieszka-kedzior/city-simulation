@@ -4,6 +4,7 @@ import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAASCIIstring;
 import hla.rti1516e.encoding.HLAboolean;
+import hla.rti1516e.encoding.HLAinteger32LE;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
@@ -44,6 +45,13 @@ public class MostFederat {
 
     protected InteractionClassHandle zmianaSwiatelHandle;
     protected ParameterHandle stanSwiatelHandle;
+
+    protected InteractionClassHandle wjazdNaMostHandle;
+    protected ParameterHandle wjazdAutoIdHandle;
+    protected ParameterHandle wjazdPredkoscAutaHandle;
+
+    protected InteractionClassHandle zjazdZMostuHandle;
+    protected ParameterHandle zjazdAutoIdHandle;
 
     protected Most most;
 
@@ -130,7 +138,9 @@ public class MostFederat {
         log("Time Policy Enabled");
 
         subscribeZmianaSwiatla();
+        subscribeWjazdNaMost();
         publishMost();
+        publishZjazdZMostu();
         log("Published and Subscribed");
 
         ObjectInstanceHandle objMostHandle = rtiamb.registerObjectInstance(mostHandle);
@@ -139,6 +149,11 @@ public class MostFederat {
 
         while (fedamb.isRunning){
             updateStanMostu(objMostHandle, most.getStanSwiatel());
+
+            if (most.getSamochodyNaMoscie().size() > 0){
+                sendInteractionZjazdZMostu();
+            }
+
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
@@ -210,6 +225,37 @@ public class MostFederat {
         log("Zmiana Swiatel Subscription Set");
     }
 
+    private void subscribeWjazdNaMost() throws RTIexception {
+        this.wjazdNaMostHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.wjazdPojadu");
+        this.wjazdAutoIdHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "idSamochodu");
+        this.wjazdPredkoscAutaHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "vMost");
+
+        rtiamb.subscribeInteractionClass(wjazdNaMostHandle);
+        log("Wjazd na Most Subscription Set");
+    }
+
+    private void publishZjazdZMostu() throws RTIexception {
+        this.zjazdZMostuHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zjazdPojazdu");
+        this.zjazdAutoIdHandle = rtiamb.getParameterHandle(zjazdZMostuHandle, "idSamochodu");
+
+        rtiamb.publishInteractionClass(zjazdZMostuHandle);
+        log("Wjazd z Mostu Publishing Set");
+    }
+
+    private void sendInteractionZjazdZMostu() throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+
+        HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(most.pierwszeAuto().getIdSamochod());
+        parameters.put(zjazdAutoIdHandle, auto.toByteArray());
+
+        rtiamb.sendInteraction(zjazdZMostuHandle, parameters, generateTag(), time);
+
+        log("Wysłanie interakcji zjazd z mostu samochodu id: " + most.pierwszeAuto().getIdSamochod());
+
+        zjazdSamochodu(most.pierwszeAuto());
+    }
+
     private void updateStanMostu(ObjectInstanceHandle objectClassHandle, StanSwiatel aktulanyStan) throws RTIexception{
         AttributeHandleValueMap mostAttributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
 
@@ -224,13 +270,30 @@ public class MostFederat {
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( objectClassHandle, mostAttributes, generateTag(), time );
 
-        log("Aktualny stan mostu: swiatla? " + aktulanyStan + " czy pusty? "+  most.czyJestPusty() + " czy pelny? " + most.czyJestPelny());
+        if(aktulanyStan.equals(StanSwiatel.CZERWONY)){
+            log("Aktualny stan: zielone swiatlo dla Miasta A, most jest pusty ("+  most.czyJestPusty() + ") i most jest pelny (" + most.czyJestPelny()+")");
+        }else{
+            log("Aktualny stan: zielone swiatlo dla Miasta B, most jest pusty ("+  most.czyJestPusty() + ") i most jest pelny (" + most.czyJestPelny()+")");
+        }
     }
 
     public void zmianaSwiatla(String stan){
         this.most.setStanSwiatel(StanSwiatel.valueOf(stan));
 
         log("Zmiana swiatel: " + stan);
+    }
+
+    public void wjazdSamochodu(int autoId){
+        Samochod noweAuto = new Samochod(autoId);
+
+        this.most.dodajPrzejezdzajacySamochod(noweAuto);
+        log("Samochod ("+autoId+") przejezdza przez most");
+    }
+
+    public void zjazdSamochodu(Samochod samochod){
+        this.most.usunPrzejezdzajacySamochod(samochod);
+
+        log("Samochod ("+samochod.getIdSamochod()+") zjechał z mostu");
     }
 
     /**

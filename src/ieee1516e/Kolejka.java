@@ -6,6 +6,7 @@ import java.util.LinkedList;
 public class Kolejka {
 
     private Integer idKolejki;
+
     private LinkedList<Samochod> kolejkaSamochod;
 
     public Kolejka(Integer idKolejki)
@@ -18,8 +19,16 @@ public class Kolejka {
         kolejkaSamochod.add(samochod);
     }
 
+    public void removeAuto(Samochod samochod){
+        kolejkaSamochod.remove(samochod);
+    }
+
     public Samochod pierwszeAuto(){
         return kolejkaSamochod.get(0);
+    }
+
+    public LinkedList<Samochod> getKolejkaSamochod() {
+        return kolejkaSamochod;
     }
 
     @Override
