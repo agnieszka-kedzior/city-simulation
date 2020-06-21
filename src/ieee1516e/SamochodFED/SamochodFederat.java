@@ -43,6 +43,9 @@ public class SamochodFederat {
     protected InteractionClassHandle dolaczenieDoKolejkiHandle;
     protected ParameterHandle dolaczaAutoIdHandle;
 
+    protected InteractionClassHandle opuszczenieKolejkiHandle;
+    protected ParameterHandle opuszczenieAutoIdHandle;
+
     private Random generator;
     private int samCount;
     private int samId;
@@ -151,6 +154,7 @@ public class SamochodFederat {
         //////////////////////////////
         publishSamochod();
         publishDolaczenieDoKolejki();
+        subscribeOpuszczenieKolejki();
         log("Published and Subscribed");
 
         ObjectInstanceHandle objAutoHandle = rtiamb.registerObjectInstance(autoHandle);
@@ -241,6 +245,15 @@ public class SamochodFederat {
         this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
         this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
         rtiamb.publishInteractionClass(dolaczenieDoKolejkiHandle);
+
+        log("Dolaczenie do kolejki Publishing Set");
+    }
+
+    private void subscribeOpuszczenieKolejki() throws RTIexception {
+        this.opuszczenieKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.opuszczenieKolejki");
+        this.opuszczenieAutoIdHandle = rtiamb.getParameterHandle(opuszczenieKolejkiHandle, "idSamochodu");
+        rtiamb.subscribeInteractionClass(opuszczenieKolejkiHandle);
+        log("Opuszczenie kolejki Subscription Set");
     }
 
     private void sendInteractionDolaczenieDoKolejki(int autoId) throws RTIexception {

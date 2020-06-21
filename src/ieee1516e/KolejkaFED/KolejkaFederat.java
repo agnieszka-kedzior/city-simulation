@@ -53,6 +53,9 @@ public class KolejkaFederat {
     protected InteractionClassHandle dolaczenieDoKolejkiHandle;
     protected ParameterHandle dolaczaAutoIdHandle;
 
+    protected InteractionClassHandle opuszczenieKolejkiHandle;
+    protected ParameterHandle opuszczenieAutoIdHandle;
+
     protected InteractionClassHandle wjazdNaMostHandle;
     protected ParameterHandle wjazdAutoIdHandle;
     protected ParameterHandle wjazdPredkoscAutaHandle;
@@ -153,6 +156,7 @@ public class KolejkaFederat {
         subscribeAuto();
         publishKolejke();
         publishWjazdNaMost();
+        publishOpuszczenieKolejki();
         subscribeDolaczenieDoKolejki();
         log("Published and Subscribed");
 
@@ -163,6 +167,8 @@ public class KolejkaFederat {
             if(przejazdDlaMiasta.equals("A") && wjazdNaMostMiastoA && !wjazdNaMostMiastoB){
                 if(kolejkaMiastoA.getKolejkaSamochod().size() > 0){
                     sendInteractionWjazdNaMost(kolejkaMiastoA.pierwszeAuto().getIdSamochod());
+                    sendInteractionOpuszczenieKolejki(kolejkaMiastoA.pierwszeAuto().getIdSamochod());
+
                     kolejkaMiastoA.removeAuto(kolejkaMiastoA.pierwszeAuto());
                 }
             }else if(przejazdDlaMiasta.equals("A") && wjazdNaMostMiastoA && wjazdNaMostMiastoB){
@@ -172,6 +178,8 @@ public class KolejkaFederat {
             }else if(przejazdDlaMiasta.equals("B") && wjazdNaMostMiastoB && !wjazdNaMostMiastoA){
                 if(kolejkaMiastoB.getKolejkaSamochod().size() > 0){
                     sendInteractionWjazdNaMost(kolejkaMiastoB.pierwszeAuto().getIdSamochod());
+                    sendInteractionOpuszczenieKolejki(kolejkaMiastoB.pierwszeAuto().getIdSamochod());
+
                     kolejkaMiastoB.removeAuto(kolejkaMiastoB.pierwszeAuto());
                 }
             }else if(przejazdDlaMiasta.equals("B") && !wjazdNaMostMiastoB && wjazdNaMostMiastoA){
@@ -280,6 +288,20 @@ public class KolejkaFederat {
         log("Wjazd na Most Publishing Set");
     }
 
+    private void publishOpuszczenieKolejki() throws RTIexception {
+        this.opuszczenieKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.opuszczenieKolejki");
+        this.opuszczenieAutoIdHandle = rtiamb.getParameterHandle(opuszczenieKolejkiHandle, "idSamochodu");
+        rtiamb.publishInteractionClass(opuszczenieKolejkiHandle);
+        log("Opuszczenie kolejki Publishing Set");
+    }
+
+    private void subscribeDolaczenieDoKolejki() throws RTIexception {
+        this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
+        this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
+        rtiamb.subscribeInteractionClass(dolaczenieDoKolejkiHandle);
+        log("Dolaczenie do kolejki Subscription Set");
+    }
+
     private void sendInteractionWjazdNaMost(int autoId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
@@ -291,12 +313,16 @@ public class KolejkaFederat {
         log("Wysłanie interakcji wjazd na most samochodu id: " + autoId);
     }
 
-    private void subscribeDolaczenieDoKolejki() throws RTIexception {
-        this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
-        this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
-        rtiamb.subscribeInteractionClass(dolaczenieDoKolejkiHandle);
-    }
+    private void sendInteractionOpuszczenieKolejki(int autoId) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
+        HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(autoId);
+        parameters.put(opuszczenieAutoIdHandle, auto.toByteArray());
+
+        rtiamb.sendInteraction(opuszczenieKolejkiHandle, parameters, generateTag(), time);
+        log("Wysłanie interakcji opuszczenie kolejki samochodu id: " + autoId);
+    }
 
     protected void dodajDoKolejki(int autoId){
         int tmp = (int) ( Math.random() * 2 + 1); // will return either 1 or 2

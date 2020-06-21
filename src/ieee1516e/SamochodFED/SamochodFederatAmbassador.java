@@ -1,9 +1,7 @@
 package ieee1516e.SamochodFED;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.DecoderException;
-import hla.rti1516e.encoding.HLAinteger16BE;
-import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 
@@ -26,6 +24,7 @@ import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32LE;
 
 
 public class SamochodFederatAmbassador extends NullFederateAmbassador {
@@ -187,6 +186,18 @@ public class SamochodFederatAmbassador extends NullFederateAmbassador {
                                    OrderType receivedOrdering,
                                    SupplementalReceiveInfo receiveInfo)
             throws FederateInternalError {
+        if(interactionClass.equals(federate.opuszczenieKolejkiHandle)){
+            HLAinteger32LE autoId = new HLA1516eInteger32LE();
+
+            byte[] bytes = theParameters.get(federate.opuszczenieAutoIdHandle);
+            try {
+                autoId.decode(bytes);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
+
+            log("Otrzymana została interakcja opuszczenie kolejki przez samochodu id: " + autoId.getValue());
+        }
     }
 
     @Override
