@@ -2,6 +2,8 @@ package ieee1516e.KolejkaFED;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
+import hla.rti1516e.encoding.HLAASCIIstring;
+import hla.rti1516e.encoding.HLAboolean;
 import hla.rti1516e.encoding.HLAinteger32LE;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
@@ -12,6 +14,8 @@ import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import ieee1516e.Kolejka;
 import ieee1516e.Samochod;
+import ieee1516e.StanSwiatel;
+import org.portico.impl.hla13.types.HLA13Set;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -163,7 +167,9 @@ public class KolejkaFederat {
         ObjectInstanceHandle objKolejkaHandle = rtiamb.registerObjectInstance(kolejkaHandle);
 
         while (fedamb.isRunning){
-            advanceTime(1.0);
+            updateStanKolejki(objKolejkaHandle, 1);
+            updateStanKolejki(objKolejkaHandle, 2);
+
             if(przejazdDlaMiasta.equals("A") && wjazdNaMostMiastoA && !wjazdNaMostMiastoB){
                 if(kolejkaMiastoA.getKolejkaSamochod().size() > 0){
                     sendInteractionWjazdNaMost(kolejkaMiastoA.pierwszeAuto().getIdSamochod());
@@ -188,6 +194,7 @@ public class KolejkaFederat {
                 log("Most jest pełny, ruch z miasta B wstrzymany");
             }
 
+            advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
 
@@ -234,6 +241,20 @@ public class KolejkaFederat {
         }
     }
 
+    private void publishKolejke() throws RTIexception {
+        this.kolejkaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Kolejka");
+        this.kolejkaNumerHandle = rtiamb.getAttributeHandle(kolejkaHandle, "idKolejka");
+        this.kolejkaPierwszyHandle = rtiamb.getAttributeHandle(kolejkaHandle,"idPierwszy");
+
+        AttributeHandleSet kolejkaAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        kolejkaAttributes.add(kolejkaNumerHandle);
+        kolejkaAttributes.add(kolejkaPierwszyHandle);
+
+        rtiamb.publishObjectClassAttributes(kolejkaHandle, kolejkaAttributes);
+
+        log("Kolejka Publishing Set");
+    }
+
     private void subscribeMost() throws RTIexception {
         this.mostHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Most");
         this.mostCzyPelnyHandle = rtiamb.getAttributeHandle(mostHandle, "czyPelny");
@@ -264,20 +285,6 @@ public class KolejkaFederat {
 
         rtiamb.subscribeObjectClassAttributes(autoHandle, attributes);
         log("Samochod Subscription Set");
-    }
-
-    private void publishKolejke() throws RTIexception {
-        this.kolejkaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Kolejka");
-        this.kolejkaNumerHandle = rtiamb.getAttributeHandle(kolejkaHandle, "idKolejka");
-        this.kolejkaPierwszyHandle = rtiamb.getAttributeHandle(kolejkaHandle,"idPierwszy");
-
-        AttributeHandleSet kolejkaAttributes = rtiamb.getAttributeHandleSetFactory().create();
-        kolejkaAttributes.add(kolejkaNumerHandle);
-        kolejkaAttributes.add(kolejkaPierwszyHandle);
-
-        rtiamb.publishObjectClassAttributes(kolejkaHandle, kolejkaAttributes);
-
-        log("Kolejka Publishing Set");
     }
 
     private void publishWjazdNaMost() throws RTIexception {
@@ -324,6 +331,21 @@ public class KolejkaFederat {
         log("Wysłanie interakcji opuszczenie kolejki samochodu id: " + autoId);
     }
 
+    private void updateStanKolejki(ObjectInstanceHandle objectClassHandle, int kolejkaId) throws RTIexception{
+        AttributeHandleValueMap kolejkaAttributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+
+        HLAinteger32LE idKolejka = encoderFactory.createHLAinteger32LE(kolejkaId);
+        HLAinteger32LE idPierwszy = encoderFactory.createHLAinteger32LE(zwrocKolejkeoId(kolejkaId).pierwszeAuto().getIdSamochod());
+
+        kolejkaAttributes.put( kolejkaNumerHandle, idKolejka.toByteArray());
+        kolejkaAttributes.put( kolejkaPierwszyHandle, idPierwszy.toByteArray());
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        rtiamb.updateAttributeValues( objectClassHandle, kolejkaAttributes, generateTag(), time );
+
+        log("W kolejce "+idKolejka + " pierwszym elementem jest samochod o id "+idPierwszy);
+    }
+
     protected void dodajDoKolejki(int autoId){
         int tmp = (int) ( Math.random() * 2 + 1); // will return either 1 or 2
 
@@ -335,6 +357,14 @@ public class KolejkaFederat {
         }else {
             this.kolejkaMiastoB.addAuto(noweAuto);
             log("Samochod ("+autoId+") czeka na przejazd w kolejce z Miasta B");
+        }
+    }
+
+    private Kolejka zwrocKolejkeoId(int kolejkaId){
+        if(kolejkaMiastoA.getIdKolejki().equals(kolejkaId)){
+            return kolejkaMiastoA;
+        }else {
+            return kolejkaMiastoB;
         }
     }
 

@@ -165,7 +165,7 @@ public class SamochodFederat {
 
         while (fedamb.isRunning) {
             // 9.1 update the attribute values of the instance //
-            //updateSamochodAttributeValues(objAutoHandle);
+            updateSamochodAttributeValues(objAutoHandle);
 
             // 9.2 send an interaction
             samCount--;

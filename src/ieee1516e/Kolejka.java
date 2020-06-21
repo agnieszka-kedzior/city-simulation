@@ -31,6 +31,10 @@ public class Kolejka {
         return kolejkaSamochod;
     }
 
+    public Integer getIdKolejki() {
+        return idKolejki;
+    }
+
     @Override
     public String toString() {
         return "Kolejka{" +
