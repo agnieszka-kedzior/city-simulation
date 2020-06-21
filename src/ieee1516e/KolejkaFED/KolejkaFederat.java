@@ -334,16 +334,25 @@ public class KolejkaFederat {
     private void updateStanKolejki(ObjectInstanceHandle objectClassHandle, int kolejkaId) throws RTIexception{
         AttributeHandleValueMap kolejkaAttributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
+        StringBuilder builder = new StringBuilder( "Zktualizacja stanu kolejki " );
+
         HLAinteger32LE idKolejka = encoderFactory.createHLAinteger32LE(kolejkaId);
-        HLAinteger32LE idPierwszy = encoderFactory.createHLAinteger32LE(zwrocKolejkeoId(kolejkaId).pierwszeAuto().getIdSamochod());
+        HLAinteger32LE idPierwszy;
 
         kolejkaAttributes.put( kolejkaNumerHandle, idKolejka.toByteArray());
-        kolejkaAttributes.put( kolejkaPierwszyHandle, idPierwszy.toByteArray());
+        builder.append(kolejkaId);
+
+        if(zwrocKolejkeoId(kolejkaId).getKolejkaSamochod().size() > 0 ){
+            idPierwszy = encoderFactory.createHLAinteger32LE(zwrocKolejkeoId(kolejkaId).pierwszeAuto().getIdSamochod());
+            builder.append(", pierwszym elementem jest samochod o id " + idPierwszy.getValue());
+        }else {
+            builder.append(", kolejka jest pusta");
+        }
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( objectClassHandle, kolejkaAttributes, generateTag(), time );
 
-        log("W kolejce "+idKolejka + " pierwszym elementem jest samochod o id "+idPierwszy);
+        log(builder.toString());
     }
 
     protected void dodajDoKolejki(int autoId){
