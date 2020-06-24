@@ -52,7 +52,10 @@ public class SamochodFederat {
     protected ParameterHandle zjazdAutoIdHandle;
     protected ParameterHandle zjazdPredkoscAutaHandle;
 
+    protected InteractionClassHandle zakonczHandle;
+
     private LinkedList<Samochod> samochody;
+    private Boolean zakoncz;
 
     private Random generator;
     private int samCount;
@@ -161,6 +164,7 @@ public class SamochodFederat {
         // 8. publish and subscribe //
         //////////////////////////////
         publishSamochod();
+        publishZakonczSymulacje();
         publishDolaczenieDoKolejki();
         subscribeOpuszczenieKolejki();
         subscribeWjazdZMostu();
@@ -172,6 +176,7 @@ public class SamochodFederat {
         generator = new Random();
         samochody = new LinkedList<>();
         samCount = SAMOCHOD_NUM;
+        zakoncz = false;
 
         while (fedamb.isRunning) {
             // 9.1 update the attribute values of the instance //
@@ -183,6 +188,17 @@ public class SamochodFederat {
                 sendInteractionDolaczenieDoKolejki(samId);
             }
             samId++;
+
+            if(samochody.getLast().getsPozostala() == 0){
+                zakoncz = true;
+            }else {
+                zakoncz = false;
+            }
+
+            if(zakoncz){
+                sendInteractionZakonczSymulacja();
+                fedamb.isRunning = false;
+            }
 
             // 9.3 request a time advance and wait until we get it
             advanceTime(generator.nextInt(5) +1);
@@ -251,6 +267,13 @@ public class SamochodFederat {
         log("Samochod Publishing Set");
     }
 
+    private void publishZakonczSymulacje() throws RTIexception {
+        this.zakonczHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zakonczSymulacje");
+        rtiamb.publishInteractionClass(zakonczHandle);
+
+        log("Zakonczenie Symulacji Publishing Set");
+    }
+
     private void publishDolaczenieDoKolejki() throws RTIexception {
         this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
         this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
@@ -274,6 +297,14 @@ public class SamochodFederat {
 
         rtiamb.subscribeInteractionClass(zjazdZMostuHandle);
         log("Zjazd z Mostu Subscription Set");
+    }
+
+    private void sendInteractionZakonczSymulacja() throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+
+        rtiamb.sendInteraction(zakonczHandle, parameters, generateTag(), time);
+        log("Zakoncz symulacje");
     }
 
     private void sendInteractionDolaczenieDoKolejki(int autoId) throws RTIexception {
@@ -303,7 +334,7 @@ public class SamochodFederat {
         for (int i = 0; i < samochody.size(); i++){
             AttributeHandleValueMap autoAttributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-            StringBuilder builder = new StringBuilder( "Zktualizacja stanu auta " );
+            StringBuilder builder = new StringBuilder( "Aktualizacja stanu auta " );
 
             HLAinteger32LE idAuto = encoderFactory.createHLAinteger32LE(i);
             HLAfloat32LE vDroga = encoderFactory.createHLAfloat32LE(samochody.get(i).getvDroga());
@@ -325,6 +356,8 @@ public class SamochodFederat {
 
             log(builder.toString());
         }
+
+
     }
 
     public void zjazdZMostuPredkosc(int autoId, float prd){

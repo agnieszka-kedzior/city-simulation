@@ -32,12 +32,22 @@ public class StatystykaFederat {
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
-    protected InteractionClassHandle zmianaSwiatelHandle;
-    protected ParameterHandle stanSwiatelHandle;
-
     protected ObjectClassHandle mostHandle;
     protected AttributeHandle mostKierunekHandle;
     protected HLAASCIIstring aktulanyStanMostu;
+
+    protected ObjectClassHandle autoHandle;
+    protected AttributeHandle autoIdHandle;
+    protected AttributeHandle autoPredkoscDrogaHandle;
+    protected AttributeHandle autoPredkoscMostHandle;
+    protected AttributeHandle autoDrogaHandle;
+
+    protected ObjectClassHandle kolejkaHandle;
+    protected AttributeHandle kolejkaNumerHandle;
+    protected AttributeHandle kolejkaPierwszyHandle;
+    protected AttributeHandle iloscSamochodowHandle;
+
+    protected InteractionClassHandle zakonczHandle;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -134,7 +144,9 @@ public class StatystykaFederat {
         aktulanyStanMostu = this.encoderFactory.createHLAASCIIstring();
 
         subscribeMost();
-        subscribeSwiatla();
+        subscribeAuto();
+        subscribeKolejka();
+        subscribeZakonczSymulacje();
         log("Published and Subscribed");
 
         while (fedamb.isRunning) {
@@ -199,11 +211,44 @@ public class StatystykaFederat {
         log("Most Subscription Set");
     }
 
-    private void subscribeSwiatla() throws RTIexception {
-        this.zmianaSwiatelHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zmianaSwiatel");
-        this.stanSwiatelHandle = rtiamb.getParameterHandle(zmianaSwiatelHandle, "stanSwiatel");
+    private void subscribeAuto() throws RTIexception {
+        this.autoHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Samochod");
+        this.autoIdHandle = rtiamb.getAttributeHandle(autoHandle,"id");
+        this.autoPredkoscDrogaHandle = rtiamb.getAttributeHandle(autoHandle, "vDroga");
+        this.autoPredkoscMostHandle = rtiamb.getAttributeHandle(autoHandle, "vMost");
+        this.autoDrogaHandle = rtiamb.getAttributeHandle(autoHandle,"sPrzebyta");
 
-        rtiamb.subscribeInteractionClass(zmianaSwiatelHandle);
+        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
+        attributes.add(autoIdHandle);
+        attributes.add(autoPredkoscDrogaHandle);
+        attributes.add(autoPredkoscMostHandle);
+        attributes.add(autoDrogaHandle);
+
+        rtiamb.subscribeObjectClassAttributes(autoHandle, attributes);
+        log("Samochod Subscription Set");
+    }
+
+    private void subscribeKolejka() throws RTIexception {
+        this.kolejkaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Kolejka");
+        this.kolejkaNumerHandle = rtiamb.getAttributeHandle(kolejkaHandle, "idKolejka");
+        this.kolejkaPierwszyHandle = rtiamb.getAttributeHandle(kolejkaHandle,"idPierwszy");
+        this.iloscSamochodowHandle = rtiamb.getAttributeHandle(kolejkaHandle, "iloscSamochodow");
+
+        AttributeHandleSet kolejkaAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        kolejkaAttributes.add(kolejkaNumerHandle);
+        kolejkaAttributes.add(kolejkaPierwszyHandle);
+        kolejkaAttributes.add(iloscSamochodowHandle);
+
+        rtiamb.subscribeObjectClassAttributes(kolejkaHandle, kolejkaAttributes);
+
+        log("Kolejka Subscription Set");
+    }
+
+    private void subscribeZakonczSymulacje() throws RTIexception {
+        this.zakonczHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zakonczSymulacje");
+        rtiamb.subscribeInteractionClass(zakonczHandle);
+
+        log("Zakonczenie Symulacji Subscription Set");
     }
 
     private void advanceTime(double timestep) throws RTIexception {

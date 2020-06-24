@@ -1,1 +1,2 @@
 ERROR [main] portico.lrc.jgroups: FAILURE createFederation: already exists, name=Federation
+ERROR [main] portico.lrc.jgroups: FAILURE destoryFederation [SygnalizacjaFederation]: doesn't exist

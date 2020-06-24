@@ -209,6 +209,9 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
             log("Otrzymana została interakcja wjazd samochodu o id " + autoId.getValue() + ", z predkoscią " + vDroga.getValue());
 
             federate.wjazdSamochodu(autoId.getValue(), vDroga.getValue());
+        }else if(interactionClass.equals(federate.zakonczHandle)){
+            log("Zakonczenie symulacji");
+            isRunning = false;
         }
 
     }

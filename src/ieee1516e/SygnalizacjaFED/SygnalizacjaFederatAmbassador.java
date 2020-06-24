@@ -238,6 +238,10 @@ public class SygnalizacjaFederatAmbassador extends NullFederateAmbassador {
                                    OrderType receivedOrdering,
                                    SupplementalReceiveInfo receiveInfo)
             throws FederateInternalError {
+        if(interactionClass.equals(federate.zakonczHandle)){
+            log("Zakonczenie symulacji");
+            isRunning = false;
+        }
     }
 
     @Override

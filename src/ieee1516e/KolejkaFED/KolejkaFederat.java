@@ -63,6 +63,8 @@ public class KolejkaFederat {
     protected ParameterHandle wjazdAutoIdHandle;
     protected ParameterHandle wjazdPredkoscAutaHandle;
 
+    protected InteractionClassHandle zakonczHandle;
+
     private Kolejka kolejkaMiastoA;
     private Kolejka kolejkaMiastoB;
     protected Boolean wjazdNaMostMiastoA;
@@ -161,6 +163,7 @@ public class KolejkaFederat {
         publishWjazdNaMost();
         publishOpuszczenieKolejki();
         subscribeDolaczenieDoKolejki();
+        subscribeZakonczSymulacje();
         log("Published and Subscribed");
 
         ObjectInstanceHandle objKolejkaHandle = rtiamb.registerObjectInstance(kolejkaHandle);
@@ -309,6 +312,13 @@ public class KolejkaFederat {
         this.dolaczaAutoVdrogaHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle,"vDroga");
         rtiamb.subscribeInteractionClass(dolaczenieDoKolejkiHandle);
         log("Dolaczenie do kolejki Subscription Set");
+    }
+
+    private void subscribeZakonczSymulacje() throws RTIexception {
+        this.zakonczHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zakonczSymulacje");
+        rtiamb.subscribeInteractionClass(zakonczHandle);
+
+        log("Zakonczenie Symulacji Subscription Set");
     }
 
     private void sendInteractionWjazdNaMost(int autoId, float vAuta) throws RTIexception {

@@ -52,6 +52,8 @@ public class MostFederat {
     protected ParameterHandle zjazdAutoIdHandle;
     protected ParameterHandle zjazdPredkoscAutaHandle;
 
+    protected InteractionClassHandle zakonczHandle;
+
     protected Most most;
     private Random generator;
 
@@ -138,6 +140,7 @@ public class MostFederat {
         log("Time Policy Enabled");
 
         subscribeZmianaSwiatla();
+        subscribeZakonczSymulacje();
         subscribeWjazdNaMost();
         publishMost();
         publishZjazdZMostu();
@@ -237,6 +240,13 @@ public class MostFederat {
         log("Wjazd na Most Subscription Set");
     }
 
+    private void subscribeZakonczSymulacje() throws RTIexception {
+        this.zakonczHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zakonczSymulacje");
+        rtiamb.subscribeInteractionClass(zakonczHandle);
+
+        log("Zakonczenie Symulacji Subscription Set");
+    }
+
     private void publishZjazdZMostu() throws RTIexception {
         this.zjazdZMostuHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zjazdPojazdu");
         this.zjazdAutoIdHandle = rtiamb.getParameterHandle(zjazdZMostuHandle, "idSamochodu");
@@ -266,6 +276,7 @@ public class MostFederat {
 
         zjazdSamochodu(most.pierwszeAuto());
     }
+
 
     private void updateStanMostu(ObjectInstanceHandle objectClassHandle, StanSwiatel aktulanyStan) throws RTIexception{
         AttributeHandleValueMap mostAttributes = rtiamb.getAttributeHandleValueMapFactory().create(1);

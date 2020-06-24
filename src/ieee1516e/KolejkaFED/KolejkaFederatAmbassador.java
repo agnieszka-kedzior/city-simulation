@@ -305,6 +305,9 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
             log("Otrzymana została interakcja dolaczenie do kolejki samochodu id: " + autoId.getValue()+", o predkosci "+vDroga.getValue());
 
             federate.dodajDoKolejki(autoId.getValue(), vDroga.getValue());
+        }else if(interactionClass.equals(federate.zakonczHandle)){
+            log("Zakonczenie symulacji");
+            isRunning = false;
         }
 
     }

@@ -208,6 +208,12 @@
 					<semantics>N/A</semantics>
 				</parameter>
 			</interactionClass>
+			<interactionClass>
+				<name>zakonczSymulacje</name>
+				<sharing>PublishSubscribe</sharing>
+				<transportation>HLAbestEffort</transportation>
+				<order>Receive</order>
+			</interactionClass>
 		</interactionClass>
 	</interactions>
 	<dimensions/>

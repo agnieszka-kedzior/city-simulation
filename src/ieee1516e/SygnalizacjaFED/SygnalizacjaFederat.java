@@ -35,6 +35,8 @@ public class SygnalizacjaFederat {
     protected InteractionClassHandle zmianaSwiatelHandle;
     protected ParameterHandle stanSwiatelHandle;
 
+    protected InteractionClassHandle zakonczHandle;
+
     protected ObjectClassHandle mostHandle;
     protected AttributeHandle mostKierunekHandle;
     protected HLAASCIIstring aktulanyStanMostu;
@@ -135,6 +137,7 @@ public class SygnalizacjaFederat {
 
         subscribeMost();
         publishSwiatla();
+        subscribeZakonczSymulacje();
         log("Published and Subscribed");
 
         while (fedamb.isRunning) {
@@ -206,6 +209,13 @@ public class SygnalizacjaFederat {
         this.stanSwiatelHandle = rtiamb.getParameterHandle(zmianaSwiatelHandle, "stanSwiatel");
 
         rtiamb.publishInteractionClass(zmianaSwiatelHandle);
+    }
+
+    private void subscribeZakonczSymulacje() throws RTIexception {
+        this.zakonczHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zakonczSymulacje");
+        rtiamb.subscribeInteractionClass(zakonczHandle);
+
+        log("Zakonczenie Symulacji Subscription Set");
     }
 
     private void sendInteractionZmianaSwiatel() throws RTIexception {
