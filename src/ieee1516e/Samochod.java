@@ -3,8 +3,10 @@ package ieee1516e;
 public class Samochod {
 
     int idSamochod;
-    double vMost;
-    double sPozostala;
+
+    float vDroga;
+    float vMost;
+    int sPozostala;
 
     public Samochod(int idCar) {
         this.idSamochod = idCar;
@@ -27,19 +29,29 @@ public class Samochod {
         this.idSamochod = idSamochod;
     }
 
-    public double getvMost() {
+    public float getvDroga() {
+        return vDroga;
+    }
+
+    public void setvDroga(float vDroga) {
+        this.vDroga = vDroga;
+    }
+
+    public float getvMost() {
         return vMost;
     }
 
-    public void setvMost(double vMost) {
+    public void setvMost(float vMost) {
         this.vMost = vMost;
     }
 
-    public double getsPozostala() {
+    public int getsPozostala() {
+        if(vMost > 0){
+            sPozostala = 0;
+        }else {
+            sPozostala = Most.getDlugoscMostu();
+        }
         return sPozostala;
     }
 
-    public void setsPozostala(double sPozostala) {
-        this.sPozostala = sPozostala;
-    }
 }

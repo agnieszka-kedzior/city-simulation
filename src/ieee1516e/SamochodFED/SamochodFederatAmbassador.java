@@ -24,6 +24,7 @@ import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eFloat32LE;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32LE;
 
 
@@ -197,6 +198,27 @@ public class SamochodFederatAmbassador extends NullFederateAmbassador {
             }
 
             log("Otrzymana została interakcja opuszczenie kolejki przez samochodu id: " + autoId.getValue());
+        }else if(interactionClass.equals(federate.zjazdZMostuHandle)){
+            HLAinteger32LE autoId = new HLA1516eInteger32LE();
+            HLAfloat32LE vMost = new HLA1516eFloat32LE();
+
+            byte[] bytes = theParameters.get(federate.zjazdAutoIdHandle);
+            try {
+                autoId.decode(bytes);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
+
+            byte[] bytesV = theParameters.get(federate.zjazdPredkoscAutaHandle);
+            try {
+                vMost.decode(bytesV);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
+
+            log("Otrzymana została interakcja zjazdu z mostu przez samochodu id: " + autoId.getValue()+", o predkosci "+vMost.getValue());
+
+            federate.zjazdZMostuPredkosc(autoId.getValue(), vMost.getValue());
         }
     }
 

@@ -9,6 +9,7 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import ieee1516e.Samochod;
 import ieee1516e.StanSwiatel;
 
 import java.io.BufferedReader;
@@ -42,9 +43,16 @@ public class SamochodFederat {
 
     protected InteractionClassHandle dolaczenieDoKolejkiHandle;
     protected ParameterHandle dolaczaAutoIdHandle;
+    protected ParameterHandle dolaczaAutoVdrogaHandle;
 
     protected InteractionClassHandle opuszczenieKolejkiHandle;
     protected ParameterHandle opuszczenieAutoIdHandle;
+
+    protected InteractionClassHandle zjazdZMostuHandle;
+    protected ParameterHandle zjazdAutoIdHandle;
+    protected ParameterHandle zjazdPredkoscAutaHandle;
+
+    private LinkedList<Samochod> samochody;
 
     private Random generator;
     private int samCount;
@@ -155,12 +163,14 @@ public class SamochodFederat {
         publishSamochod();
         publishDolaczenieDoKolejki();
         subscribeOpuszczenieKolejki();
+        subscribeWjazdZMostu();
         log("Published and Subscribed");
 
         ObjectInstanceHandle objAutoHandle = rtiamb.registerObjectInstance(autoHandle);
         log( "Registered Object, handle=" + objAutoHandle );
 
-        generator=new Random();
+        generator = new Random();
+        samochody = new LinkedList<>();
         samCount = SAMOCHOD_NUM;
 
         while (fedamb.isRunning) {
@@ -169,10 +179,10 @@ public class SamochodFederat {
 
             // 9.2 send an interaction
             samCount--;
-            samId++;
             if(samCount>0){
                 sendInteractionDolaczenieDoKolejki(samId);
             }
+            samId++;
 
             // 9.3 request a time advance and wait until we get it
             advanceTime(generator.nextInt(5) +1);
@@ -244,6 +254,7 @@ public class SamochodFederat {
     private void publishDolaczenieDoKolejki() throws RTIexception {
         this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
         this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
+        this.dolaczaAutoVdrogaHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "vDroga");
         rtiamb.publishInteractionClass(dolaczenieDoKolejkiHandle);
 
         log("Dolaczenie do kolejki Publishing Set");
@@ -256,12 +267,32 @@ public class SamochodFederat {
         log("Opuszczenie kolejki Subscription Set");
     }
 
+    private void subscribeWjazdZMostu() throws RTIexception {
+        this.zjazdZMostuHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zjazdPojazdu");
+        this.zjazdAutoIdHandle = rtiamb.getParameterHandle(zjazdZMostuHandle, "idSamochodu");
+        this.zjazdPredkoscAutaHandle = rtiamb.getParameterHandle(zjazdZMostuHandle, "vMost");
+
+        rtiamb.subscribeInteractionClass(zjazdZMostuHandle);
+        log("Zjazd z Mostu Subscription Set");
+    }
+
     private void sendInteractionDolaczenieDoKolejki(int autoId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
+        Random r = new Random();
+        float ran = 1 + (100 - 1)*r.nextFloat();
+
+        Samochod noweAuto = new Samochod(autoId);
+        noweAuto.setvDroga(ran);
+
+        samochody.add(noweAuto);
+
         HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(autoId);
+        HLAfloat32LE vDroga = encoderFactory.createHLAfloat32LE(noweAuto.getvDroga());
+
         parameters.put(dolaczaAutoIdHandle, auto.toByteArray());
+        parameters.put(dolaczaAutoVdrogaHandle, vDroga.toByteArray());
 
         rtiamb.sendInteraction(dolaczenieDoKolejkiHandle, parameters, generateTag(), time);
         log("Wysłanie interakcji dolaczenie do kolejki samochodu id: " + autoId);
@@ -269,12 +300,36 @@ public class SamochodFederat {
 
     private void updateSamochodAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception
     {
-        AttributeHandleValueMap autoAttributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
+        for (int i = 0; i < samochody.size(); i++){
+            AttributeHandleValueMap autoAttributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-        rtiamb.updateAttributeValues( objectHandle, autoAttributes, generateTag(), time );
+            StringBuilder builder = new StringBuilder( "Zktualizacja stanu auta " );
 
-        log("Aktualizacja atrybutów obiektu samochodu ");
+            HLAinteger32LE idAuto = encoderFactory.createHLAinteger32LE(i);
+            HLAfloat32LE vDroga = encoderFactory.createHLAfloat32LE(samochody.get(i).getvDroga());
+            HLAfloat32LE vMost = encoderFactory.createHLAfloat32LE(samochody.get(i).getvMost());
+            HLAfloat32LE sDroga = encoderFactory.createHLAfloat32LE(samochody.get(i).getsPozostala());
+
+            autoAttributes.put( autoIdHandle, idAuto.toByteArray());
+            autoAttributes.put( autoPredkoscDrogaHandle, vDroga.toByteArray());
+            autoAttributes.put( autoPredkoscMostHandle, vMost.toByteArray());
+            autoAttributes.put( autoDrogaHandle, sDroga.toByteArray());
+
+            builder.append(idAuto.getValue());
+            builder.append(", predkosc na drodze "+ vDroga.getValue());
+            builder.append(", predkosc na moscie "+ vMost.getValue());
+            builder.append(", droga do przebycia "+ sDroga.getValue());
+
+            HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+            rtiamb.updateAttributeValues( objectHandle, autoAttributes, generateTag(), time );
+
+            log(builder.toString());
+        }
+    }
+
+    public void zjazdZMostuPredkosc(int autoId, float prd){
+        Samochod sam = samochody.get(autoId);
+        sam.setvMost(prd);
     }
 
     private ObjectInstanceHandle registerObject() throws RTIexception {

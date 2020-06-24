@@ -5,6 +5,7 @@ import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 import ieee1516e.StanSwiatel;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eFloat32LE;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32LE;
 
@@ -285,6 +286,7 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
     {
         if(interactionClass.equals(federate.dolaczenieDoKolejkiHandle)){
             HLAinteger32LE autoId = new HLA1516eInteger32LE();
+            HLAfloat32LE vDroga = new HLA1516eFloat32LE();
 
             byte[] bytes = theParameters.get(federate.dolaczaAutoIdHandle);
             try {
@@ -293,9 +295,16 @@ public class KolejkaFederatAmbassador extends NullFederateAmbassador {
                 e.printStackTrace();
             }
 
-            log("Otrzymana została interakcja dolaczenie do kolejki samochodu id: " + autoId.getValue());
+            byte[] bytesV = theParameters.get(federate.dolaczaAutoVdrogaHandle);
+            try {
+                vDroga.decode(bytesV);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
 
-            federate.dodajDoKolejki(autoId.getValue());
+            log("Otrzymana została interakcja dolaczenie do kolejki samochodu id: " + autoId.getValue()+", o predkosci "+vDroga.getValue());
+
+            federate.dodajDoKolejki(autoId.getValue(), vDroga.getValue());
         }
 
     }

@@ -2,11 +2,13 @@ package ieee1516e.MostFED;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
+import hla.rti1516e.encoding.HLAfloat32LE;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.encoding.HLAinteger32LE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eASCIIstring;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eFloat32LE;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32LE;
 
 
@@ -188,6 +190,7 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
             federate.zmianaSwiatla(stan.getValue());
         } else if(interactionClass.equals(federate.wjazdNaMostHandle)){
             HLAinteger32LE autoId = new HLA1516eInteger32LE();
+            HLAfloat32LE vDroga = new HLA1516eFloat32LE();
 
             byte[] bytes = theParameters.get(federate.wjazdAutoIdHandle);
             try {
@@ -196,9 +199,16 @@ public class MostFederatAmbassador extends NullFederateAmbassador {
                 e.printStackTrace();
             }
 
-            log("Otrzymana została interakcja wjazd samochodu o id " + autoId.getValue());
+            byte[] bytesV = theParameters.get(federate.wjazdPredkoscAutaHandle);
+            try {
+                vDroga.decode(bytesV);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
 
-            federate.wjazdSamochodu(autoId.getValue());
+            log("Otrzymana została interakcja wjazd samochodu o id " + autoId.getValue() + ", z predkoscią " + vDroga.getValue());
+
+            federate.wjazdSamochodu(autoId.getValue(), vDroga.getValue());
         }
 
     }

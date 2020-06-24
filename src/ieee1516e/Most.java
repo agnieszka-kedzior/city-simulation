@@ -6,6 +6,8 @@ public class Most {
 
     private static final Integer MAX_NUM_AUT = 10;
 
+    private static final int DLUGOSC_MOSTU = 10;
+
     private StanSwiatel stanSwiatel;
     private LinkedList<Samochod> samochodyNaMoscie;
 
@@ -52,5 +54,9 @@ public class Most {
 
     public LinkedList<Samochod> getSamochodyNaMoscie() {
         return samochodyNaMoscie;
+    }
+
+    public static int getDlugoscMostu() {
+        return DLUGOSC_MOSTU;
     }
 }

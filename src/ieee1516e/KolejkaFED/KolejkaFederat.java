@@ -1,10 +1,7 @@
 package ieee1516e.KolejkaFED;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAASCIIstring;
-import hla.rti1516e.encoding.HLAboolean;
-import hla.rti1516e.encoding.HLAinteger32LE;
+import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
@@ -57,6 +54,7 @@ public class KolejkaFederat {
 
     protected InteractionClassHandle dolaczenieDoKolejkiHandle;
     protected ParameterHandle dolaczaAutoIdHandle;
+    protected ParameterHandle dolaczaAutoVdrogaHandle;
 
     protected InteractionClassHandle opuszczenieKolejkiHandle;
     protected ParameterHandle opuszczenieAutoIdHandle;
@@ -173,7 +171,7 @@ public class KolejkaFederat {
 
             if(przejazdDlaMiasta.equals("A") && wjazdNaMostMiastoA && !wjazdNaMostMiastoB){
                 if(kolejkaMiastoA.getKolejkaSamochod().size() > 0){
-                    sendInteractionWjazdNaMost(kolejkaMiastoA.pierwszeAuto().getIdSamochod());
+                    sendInteractionWjazdNaMost(kolejkaMiastoA.pierwszeAuto().getIdSamochod(), kolejkaMiastoA.pierwszeAuto().getvDroga());
                     sendInteractionOpuszczenieKolejki(kolejkaMiastoA.pierwszeAuto().getIdSamochod());
 
                     kolejkaMiastoA.removeAuto(kolejkaMiastoA.pierwszeAuto());
@@ -184,7 +182,7 @@ public class KolejkaFederat {
                 log("Most jest pełny, ruch z miasta A wstrzymany");
             }else if(przejazdDlaMiasta.equals("B") && wjazdNaMostMiastoB && !wjazdNaMostMiastoA){
                 if(kolejkaMiastoB.getKolejkaSamochod().size() > 0){
-                    sendInteractionWjazdNaMost(kolejkaMiastoB.pierwszeAuto().getIdSamochod());
+                    sendInteractionWjazdNaMost(kolejkaMiastoB.pierwszeAuto().getIdSamochod(), kolejkaMiastoB.pierwszeAuto().getvDroga());
                     sendInteractionOpuszczenieKolejki(kolejkaMiastoB.pierwszeAuto().getIdSamochod());
 
                     kolejkaMiastoB.removeAuto(kolejkaMiastoB.pierwszeAuto());
@@ -293,7 +291,7 @@ public class KolejkaFederat {
     private void publishWjazdNaMost() throws RTIexception {
         this.wjazdNaMostHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.wjazdPojadu");
         this.wjazdAutoIdHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "idSamochodu");
-        this.wjazdPredkoscAutaHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "vMost");
+        this.wjazdPredkoscAutaHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "vDroga");
         rtiamb.publishInteractionClass(wjazdNaMostHandle);
         log("Wjazd na Most Publishing Set");
     }
@@ -308,16 +306,20 @@ public class KolejkaFederat {
     private void subscribeDolaczenieDoKolejki() throws RTIexception {
         this.dolaczenieDoKolejkiHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.dolaczenieDoKolejki");
         this.dolaczaAutoIdHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle, "idSamochodu");
+        this.dolaczaAutoVdrogaHandle = rtiamb.getParameterHandle(dolaczenieDoKolejkiHandle,"vDroga");
         rtiamb.subscribeInteractionClass(dolaczenieDoKolejkiHandle);
         log("Dolaczenie do kolejki Subscription Set");
     }
 
-    private void sendInteractionWjazdNaMost(int autoId) throws RTIexception {
+    private void sendInteractionWjazdNaMost(int autoId, float vAuta) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
         HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(autoId);
+        HLAfloat32LE vDroga = encoderFactory.createHLAfloat32LE(vAuta);
+
         parameters.put(wjazdAutoIdHandle, auto.toByteArray());
+        parameters.put(wjazdPredkoscAutaHandle, vDroga.toByteArray());
 
         rtiamb.sendInteraction(wjazdNaMostHandle, parameters, generateTag(), time);
         log("Wysłanie interakcji wjazd na most samochodu id: " + autoId);
@@ -364,10 +366,11 @@ public class KolejkaFederat {
         log(builder.toString());
     }
 
-    protected void dodajDoKolejki(int autoId){
+    protected void dodajDoKolejki(int autoId, float vDroga){
         int tmp = (int) ( Math.random() * 2 + 1); // will return either 1 or 2
 
         Samochod noweAuto = new Samochod(autoId);
+        noweAuto.setvDroga(vDroga);
 
         if(tmp == 1){
             this.kolejkaMiastoA.addAuto(noweAuto);

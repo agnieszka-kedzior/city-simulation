@@ -1,10 +1,7 @@
 package ieee1516e.MostFED;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAASCIIstring;
-import hla.rti1516e.encoding.HLAboolean;
-import hla.rti1516e.encoding.HLAinteger32LE;
+import hla.rti1516e.encoding.*;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
@@ -30,7 +27,6 @@ public class MostFederat {
     //                    STATIC VARIABLES
     //----------------------------------------------------------
     public static final String READY_TO_RUN = "ReadyToRun";
-    public static final int DROGA_MOSTU = 10;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -54,6 +50,7 @@ public class MostFederat {
 
     protected InteractionClassHandle zjazdZMostuHandle;
     protected ParameterHandle zjazdAutoIdHandle;
+    protected ParameterHandle zjazdPredkoscAutaHandle;
 
     protected Most most;
     private Random generator;
@@ -234,7 +231,7 @@ public class MostFederat {
     private void subscribeWjazdNaMost() throws RTIexception {
         this.wjazdNaMostHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.wjazdPojadu");
         this.wjazdAutoIdHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "idSamochodu");
-        this.wjazdPredkoscAutaHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "vMost");
+        this.wjazdPredkoscAutaHandle = rtiamb.getParameterHandle(wjazdNaMostHandle, "vDroga");
 
         rtiamb.subscribeInteractionClass(wjazdNaMostHandle);
         log("Wjazd na Most Subscription Set");
@@ -243,6 +240,7 @@ public class MostFederat {
     private void publishZjazdZMostu() throws RTIexception {
         this.zjazdZMostuHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.zjazdPojazdu");
         this.zjazdAutoIdHandle = rtiamb.getParameterHandle(zjazdZMostuHandle, "idSamochodu");
+        this.zjazdPredkoscAutaHandle = rtiamb.getParameterHandle(zjazdZMostuHandle, "vMost");
 
         rtiamb.publishInteractionClass(zjazdZMostuHandle);
         log("Wjazd z Mostu Publishing Set");
@@ -252,8 +250,15 @@ public class MostFederat {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
+        Random r = new Random();
+        float ran = 1 + (most.pierwszeAuto().getvDroga() - 1)*r.nextFloat();
+        most.pierwszeAuto().setvMost(most.pierwszeAuto().getvDroga() - ran);
+
         HLAinteger32LE auto = encoderFactory.createHLAinteger32LE(most.pierwszeAuto().getIdSamochod());
+        HLAfloat32LE vMost = encoderFactory.createHLAfloat32LE(most.pierwszeAuto().getvMost());
+
         parameters.put(zjazdAutoIdHandle, auto.toByteArray());
+        parameters.put(zjazdPredkoscAutaHandle, vMost.toByteArray());
 
         rtiamb.sendInteraction(zjazdZMostuHandle, parameters, generateTag(), time);
 
@@ -289,8 +294,9 @@ public class MostFederat {
         log("Zmiana swiatel: " + stan);
     }
 
-    public void wjazdSamochodu(int autoId){
+    public void wjazdSamochodu(int autoId, float prd){
         Samochod noweAuto = new Samochod(autoId);
+        noweAuto.setvDroga(prd);
 
         this.most.dodajPrzejezdzajacySamochod(noweAuto);
         log("Samochod ("+autoId+") przejezdza przez most");

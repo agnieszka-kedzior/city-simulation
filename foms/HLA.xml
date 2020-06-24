@@ -149,7 +149,7 @@
 					<semantics>N/A</semantics>
 				</parameter>
 				<parameter>
-					<name>vMost</name>
+					<name>vDroga</name>
 					<dataType>HLAfloat32LE</dataType>
 					<semantics>N/A</semantics>
 				</parameter>
@@ -162,6 +162,11 @@
 				<parameter>
 					<name>idSamochodu</name>
 					<dataType>HLAinteger32LE</dataType>
+					<semantics>N/A</semantics>
+				</parameter>
+				<parameter>
+					<name>vMost</name>
+					<dataType>HLAfloat32LE</dataType>
 					<semantics>N/A</semantics>
 				</parameter>
 			</interactionClass>
@@ -184,6 +189,11 @@
 				<parameter>
 					<name>idSamochodu</name>
 					<dataType>HLAinteger32LE</dataType>
+					<semantics>N/A</semantics>
+				</parameter>
+				<parameter>
+					<name>vDroga</name>
+					<dataType>HLAfloat32LE</dataType>
 					<semantics>N/A</semantics>
 				</parameter>
 			</interactionClass>
